@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>푸시·SMS·MFA 피로, 그리고 MFA가 못 막는 것 — 사용자 인증 연구소</title>
+<link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+<header class="site">
+  <a class="brand" href="index.html">사용자 인증 연구소</a>
+  <span class="tag">패스워드 이후의 인증을 기초부터 — 공부 기록</span>
+</header>
+<div class="layout">
+<nav class="toc">
+  <ul>
+<li class="chap">0. 인증의 기초<ul>
+<li><a href="history.html">인증의 역사 — 한 장의 맵</a></li>
+<li><a href="basics.html">식별·인증·인가와 인증 요소</a></li>
+<li><a href="threats.html">위협 모델 어휘</a></li>
+</ul></li>
+<li class="chap">1. 패스워드<ul>
+<li><a href="password-storage.html">서버 저장: 해시·솔트·KDF</a></li>
+<li><a href="password-guessing.html">추측 모델 계보와 강도 추정</a></li>
+<li><a href="password-policy.html">정책의 역사와 NIST SP 800-63B</a></li>
+<li><a href="password-managers.html">패스워드 관리자</a></li>
+</ul></li>
+<li class="chap">2. OTP와 MFA<ul>
+<li><a href="otp.html">HOTP·TOTP와 공유 비밀</a></li>
+<li class="cur"><a href="mfa.html">푸시·SMS·MFA 피로, 그리고 MFA가 못 막는 것</a></li>
+</ul></li>
+<li class="chap">3. 공개키 기반 인증<ul>
+<li><a href="pki.html">챌린지-응답과 PKI·인증서</a></li>
+<li><a href="npki.html">공동인증서(구 공인인증서)</a></li>
+<li><a href="smartcard.html">클라이언트 인증서·스마트카드·SSH 키</a></li>
+</ul></li>
+<li class="chap">4. FIDO와 패스키<ul>
+<li><a href="fido2.html">U2F → FIDO2: WebAuthn + CTAP</a></li>
+<li><a href="passkeys.html">패스키: synced vs device-bound</a></li>
+<li><a href="passkeys-vs-npki.html">패스키 vs 공동인증서</a></li>
+</ul></li>
+<li class="chap">5. 연합 인증과 SSO<ul>
+<li class="todo">IdP와 SSO 개념</li>
+<li><a href="kerberos.html">Kerberos 인증 흐름</a></li>
+<li class="todo">SAML 2.0</li>
+<li class="todo">OAuth 2.0 vs OIDC</li>
+<li class="todo">토큰·세션·쿠키</li>
+<li class="todo">Entra ID·Okta와 AD</li>
+</ul></li>
+<li class="chap">6. 생체 인증<ul>
+<li class="todo">로컬 매칭 vs 서버 매칭, FAR·FRR</li>
+</ul></li>
+<li class="chap">7. 계정 등록·복구<ul>
+<li class="todo">가장 약한 고리</li>
+</ul></li>
+<li class="chap">8. 실전 공격 사례<ul>
+<li class="todo">Kerberoasting부터 세션 탈취까지</li>
+</ul></li>
+<li class="chap">9. 실습 랩<ul>
+<li class="todo">WebAuthn 등록·인증 데모</li>
+<li class="todo">TOTP 생성기</li>
+<li class="todo">방식별 "서버에 남는 것" 비교</li>
+</ul></li>
+  </ul>
+</nav>
+<main class="wrap">
+<h1>푸시·SMS·MFA 피로, 그리고 MFA가 못 막는 것</h1>
+<p class="sub">MFA는 "비밀 하나가 새도 막힌다"를 사 준다. "사용자가 가짜 사이트에서 실시간으로 로그인한다"는 사 주지 못한다. 그 차이가 2020년대 계정 탈취의 지도를 다시 그렸다</p>
+
+<div class="def"><b>MFA</b>(다중 요소 인증)는 서로 다른 종류의 요소(지식·소유·생체) 두 개 이상을 요구하는 인증이다. 실무에서 대부분은 <b>패스워드 + 두 번째 요소</b>(SMS 코드·TOTP·푸시 승인)라는 <i>보강</i> 구조라서, 패스워드 유출·추측·스터핑의 가치를 크게 깎지만 패스워드 자체와 그 공격 표면은 그대로 남는다. 두 번째 요소가 피싱 내성(origin 바인딩)이 아니면 실시간 중계(AiTM)와 사용자 설득(MFA 피로·사회공학)에 뚫린다. "MFA냐 아니냐"보다 "<b>어떤</b> MFA냐"가 위협 모델을 가른다.</div>
+
+<svg class="fig" viewBox="0 0 960 470" xmlns="http://www.w3.org/2000/svg" font-family="Apple SD Gothic Neo, Pretendard, Helvetica, Arial, sans-serif" font-size="12">
+  <defs>
+    <marker id="ar11" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1a1f2b"/></marker>
+    <marker id="ar11r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b91c1c"/></marker>
+  </defs>
+  <text x="480" y="24" text-anchor="middle" font-weight="700" font-size="13">AiTM 피싱 — 패스워드 + TOTP를 실시간으로 중계하고 세션 쿠키를 가져간다</text>
+  <!-- actors -->
+  <rect x="40" y="40" width="160" height="44" rx="8" fill="#fff" stroke="#1a1f2b" stroke-width="1.4"/><text x="120" y="60" text-anchor="middle" font-weight="700">사용자 브라우저</text><text x="120" y="76" text-anchor="middle" font-size="10.5" fill="#5c6474">주소창: login-examp1e.com</text>
+  <rect x="400" y="40" width="160" height="44" rx="8" fill="#fff1f2" stroke="#b91c1c" stroke-width="1.6"/><text x="480" y="60" text-anchor="middle" font-weight="700" fill="#b91c1c">AiTM 프록시</text><text x="480" y="76" text-anchor="middle" font-size="10.5" fill="#5c6474">Evilginx 류 역방향 프록시</text>
+  <rect x="760" y="40" width="160" height="44" rx="8" fill="#fff" stroke="#1a1f2b" stroke-width="1.4"/><text x="840" y="60" text-anchor="middle" font-weight="700">진짜 사이트</text><text x="840" y="76" text-anchor="middle" font-size="10.5" fill="#5c6474">example.com</text>
+  <g stroke="#5c6474" stroke-width="1" stroke-dasharray="3 3"><line x1="120" y1="86" x2="120" y2="350"/><line x1="480" y1="86" x2="480" y2="350"/><line x1="840" y1="86" x2="840" y2="350"/></g>
+  <!-- messages -->
+  <g stroke-width="1.4" font-size="11">
+    <line x1="122" y1="110" x2="476" y2="110" stroke="#1a1f2b" marker-end="url(#ar11)"/><text x="300" y="104" text-anchor="middle">1. ID · 패스워드 입력</text>
+    <line x1="484" y1="130" x2="836" y2="130" stroke="#b91c1c" marker-end="url(#ar11r)"/><text x="660" y="124" text-anchor="middle" fill="#b91c1c">2. 그대로 전달 (패스워드 획득)</text>
+    <line x1="836" y1="160" x2="484" y2="160" stroke="#1a1f2b" marker-end="url(#ar11)"/><text x="660" y="154" text-anchor="middle">3. "인증 코드를 입력하세요"</text>
+    <line x1="476" y1="180" x2="124" y2="180" stroke="#b91c1c" marker-end="url(#ar11r)"/><text x="300" y="174" text-anchor="middle" fill="#b91c1c">4. 진짜 페이지 그대로 보여 줌</text>
+    <line x1="122" y1="210" x2="476" y2="210" stroke="#1a1f2b" marker-end="url(#ar11)"/><text x="300" y="204" text-anchor="middle">5. TOTP 6자리 입력 (30초 안)</text>
+    <line x1="484" y1="230" x2="836" y2="230" stroke="#b91c1c" marker-end="url(#ar11r)"/><text x="660" y="224" text-anchor="middle" fill="#b91c1c">6. 즉시 전달 → MFA 통과</text>
+    <line x1="836" y1="260" x2="484" y2="260" stroke="#1a1f2b" marker-end="url(#ar11)"/><text x="660" y="254" text-anchor="middle">7. Set-Cookie: 세션 (N시간 유효)</text>
+    <line x1="476" y1="290" x2="124" y2="290" stroke="#b91c1c" marker-end="url(#ar11r)"/><text x="300" y="284" text-anchor="middle" fill="#b91c1c">8. 사용자에겐 정상 로그인 화면</text>
+  </g>
+  <rect x="380" y="306" width="200" height="40" rx="8" fill="#b91c1c"/><text x="480" y="324" text-anchor="middle" fill="#fff" font-weight="700">공격자가 쿠키를 보관</text><text x="480" y="339" text-anchor="middle" fill="#fff" font-size="10.5">세션 만료까지 MFA 없이 접속</text>
+  <!-- why passkey stops it -->
+  <rect x="20" y="372" width="920" height="88" rx="10" fill="#ecfdf5" stroke="#15803d" stroke-width="1.2"/>
+  <text x="36" y="394" font-weight="700" fill="#15803d">같은 그림에서 패스키(FIDO)는 어디서 끊기나</text>
+  <text x="36" y="414" font-size="11">5번 자리에서 브라우저가 origin = login-examp1e.com 으로 서명을 요청한다. 인증기에 그 RP ID의 키가 없고, 프록시가 rpId = "example.com"을 요구하면 브라우저가 SecurityError로 거부한다.</text>
+  <text x="36" y="432" font-size="11">설령 서명이 나와도 clientDataJSON 안의 origin이 가짜 도메인이라 진짜 사이트가 6번에서 거부한다. 사람의 판단과 무관하게 끊긴다 — 이것이 피싱 내성(4장).</text>
+  <text x="36" y="450" font-size="11" fill="#5c6474">TOTP·SMS·푸시 코드는 "어느 사이트에 입력되는가"를 담지 않는다. 그래서 같은 그림에서 MFA 종류만 바꿔도 결과가 바뀌지 않는다.</text>
+</svg>
+<p class="cap">1~8번 중 공격자가 암호를 깨는 단계는 하나도 없다. 프록시는 사용자와 진짜 사이트 사이에서 메시지를 그대로 옮기고, MFA를 통과한 <i>결과</i>(세션 쿠키)를 가져간다. 그래서 MFA를 몇 단계 늘려도 결과가 같고, 막는 방법은 인증 응답을 진짜 사이트에 묶는 것이다: 서명에 origin을 넣거나(FIDO — 63B-4의 verifier name binding) TLS 채널에 묶거나(PIV 클라이언트 인증서 — channel binding). 세션 쿠키 기기 바인딩(DBSC 등, 5장 예정)은 로그인 <i>이후</i>의 쿠키 탈취를 막을 뿐 AiTM 로그인 자체는 못 막는다 — 프록시가 진짜 사이트의 클라이언트이므로 세션이 프록시 쪽 키에 묶이기 때문이다.</p>
+
+<h2>두 번째 요소별로 막는 것</h2>
+<p>두 번째 요소는 무엇을 막는지가 다 다르다. 마지막 줄을 빼면 일렬로 줄 세울 수 없다 — 열마다 강약이 다르다. 공식 순위가 필요하면 표 아래 CISA의 네 단을 본다.</p>
+<table>
+  <tr><th>두 번째 요소</th><th>원리</th><th>스터핑 · 추측</th><th>SIM 스와핑</th><th>MFA 피로</th><th>피싱 (사후)</th><th>AiTM</th><th>서버 비밀 유출</th></tr>
+  <tr><td><b>SMS · 음성 OTP</b></td><td>통신망으로 코드 전송</td><td class="ok">막음</td><td class="no">당함</td><td class="ok">해당 없음</td><td class="na">일부</td><td class="no">당함</td><td class="ok">코드는 일회성</td></tr>
+  <tr><td><b>이메일 OTP · 매직 링크</b></td><td>메일함 소유 증명. 63B-4는 "Email SHALL NOT be used for out-of-band authentication"(§3.1.3.1)</td><td class="ok">막음</td><td class="ok">무관</td><td class="ok">해당 없음</td><td class="na">일부</td><td class="no">당함</td><td class="na">코드는 일회성 (단, 메일 계정 탈취 = 이 요소 탈취)</td></tr>
+  <tr><td><b>TOTP 앱 · 토큰</b></td><td><a href="otp.html">공유 비밀 HMAC</a></td><td class="ok">막음</td><td class="ok">무관</td><td class="ok">해당 없음</td><td class="na">일부</td><td class="no">당함</td><td class="no">K DB 유출 = 전 토큰 복제</td></tr>
+  <tr><td><b>단순 푸시 승인</b></td><td>등록 앱에 "승인?" 알림</td><td class="ok">막음</td><td class="ok">무관</td><td class="no">당함 — 반복 전송 후 한 번 승인</td><td class="na">코드 없음 — 대신 언제든 푸시를 다시 보낼 수 있어 "MFA 피로" 열로 넘어감</td><td class="no">당함 — 프록시가 로그인 시작, 사용자가 승인</td><td class="na">구현 의존 (많은 제품이 기기 키쌍 사용)</td></tr>
+  <tr><td><b>푸시 + 번호 매칭</b></td><td>로그인 화면 숫자를 앱에 입력</td><td class="ok">막음</td><td class="ok">무관</td><td class="ok">대부분 막음</td><td class="ok">코드 없음</td><td class="no">당함 — 프록시가 숫자도 보여 줌</td><td class="na">구현 의존</td></tr>
+  <tr><td><b>FIDO2 · 패스키 · PIV</b></td><td>origin(FIDO) 또는 TLS 채널(PIV)에 묶인 서명</td><td class="ok">막음</td><td class="ok">무관</td><td class="ok">해당 없음</td><td class="ok">막음</td><td class="ok">막음</td><td class="ok">공개키만</td></tr>
+</table>
+<p>표의 마지막 열과 AiTM 열이 핵심이다. SMS부터 번호 매칭까지 다섯 줄은 모두 AiTM에 뚫린다 — 표를 내려가며 막히는 것은 SIM 스와핑과 MFA 피로이지 실시간 중계가 아니다. AiTM 열이 초록으로 바뀌는 건 서명이 진짜 사이트(origin 또는 TLS 채널)에 묶이는 마지막 줄뿐이다. 그래서 NIST 63B-4는 피싱 내성을 요소 개수와 별도의 속성으로 정의하고(§3.2.5: "the ability of the authentication protocol to prevent the disclosure of authentication secrets and valid authenticator outputs to an impostor verifier … without relying on the vigilance of the claimant"), AAL2부터 "SHALL offer at least one phishing-resistant authentication option"을 요구한다(<a href="basics.html">0장</a>). CISA의 2022년 팩트시트는 강한 순으로 네 단을 그린다: ① FIDO/WebAuthn·PKI ② 앱 OTP·번호 매칭 푸시·토큰 OTP(한 단) ③ 번호 매칭 없는 푸시("Vulnerable to push bombing attacks") ④ SMS·음성·이메일 코드("should only be used as a last resort").</p>
+
+<h2>SMS가 가장 약한 이유: 전화번호는 인증 요소가 아니라 주소다</h2>
+<p>SMS OTP의 보안은 "그 번호로 온 문자를 받는 사람 = 계정 주인"이라는 가정에 기대는데, 번호는 통신사가 관리하는 <i>라우팅 주소</i>라 통신사 절차가 뚫리면 옮겨진다. <b>SIM 스와핑</b>은 공격자가 통신사 상담원을 속이거나 매수해 피해자 번호를 자기 SIM으로 옮기는 것이고, 그 순간부터 모든 SMS 코드와 "전화번호로 계정 복구"가 공격자에게 간다. 공격자는 피해자 기기에 손댈 필요가 없다. Princeton 연구진(Lee 등, SOUPS 2020)이 미국 통신사 5곳(AT&amp;T·T-Mobile·Verizon·Tracfone·US Mobile)에 선불 계정 50개를 만들고 SIM 교체를 요청한 실험에서 39건이 성공했고, "all five carriers used insecure authentication challenges that could be easily subverted by attackers"였다. 여러 질문을 틀려도 하나만 맞히면 통과했다. 같은 연구에서 전화 기반 인증을 쓰는 웹사이트 145곳을 분석했더니 17곳이 SIM 스와핑만으로 탈취되는 설정을 허용했다(13곳은 기본값·권장값). 미국 FCC는 2023-11-15 통신사에 번호 이전 전 안전한 본인 확인과 즉시 통지를 의무화하는 규칙을 채택했다(시행 시점은 <span class="est">추정</span>: 유예 여부 미확인). 나머지 약점(SS7 신호망 도청, 문자 미리보기, 악성 앱의 SMS 읽기 권한)은 덤이다.</p>
+
+<h2>MFA 피로: 사용자가 두 번째 요소가 된다</h2>
+<p>단순 푸시 승인은 코드를 옮기는 대신 사용자가 "승인"을 누르는 방식이라 피싱 페이지에 입력할 것이 없다. 대신 공격자가 이미 가진 패스워드로 로그인을 반복 시도해 승인 요청을 수십 번 보내면, 사용자는 결국 실수로 또는 귀찮아서 한 번 누른다. 여기에 "IT팀인데 알림을 멈추려면 승인하라"는 메시지를 더하면 성공률이 오른다. 2022년 9월 Uber 침해가 정확히 이 형태였다. Uber 발표: "It is likely that the attacker purchased the contractor's Uber corporate password on the dark web, after the contractor's personal device had been infected with malware", 이어 반복 로그인 시도마다 승인 요청이 갔고 "Eventually, however, the contractor accepted one". 공격자가 WhatsApp으로 "Uber IT"를 사칭해 승인하면 알림이 멈춘다고 말했다는 대목은 Uber 발표가 아니라 공격자 본인이 연구자에게 한 진술이다(BleepingComputer 보도). Cisco는 2022-05-24 침해를 인지했는데, 직원 개인 구글 계정에 브라우저 저장 패스워드가 동기화돼 있었고, 공격자는 신뢰하는 지원 조직을 사칭한 음성 피싱과 반복 푸시로 MFA를 넘었다(Talos 2022-08-10). 두 사건 모두 출발점은 <i>유효한 패스워드</i>였다.</p>
+<p><b>번호 매칭</b>은 로그인 화면에 표시된 짧은 숫자(Microsoft는 두 자리, Duo는 3~6자리)를 앱에 입력해야 승인되게 해서, "로그인을 시작한 화면을 보고 있는 사람"만 승인할 수 있게 만든다. 피로 공격은 대부분 막지만 AiTM은 못 막는다 — 프록시가 진짜 사이트의 숫자를 그대로 사용자에게 보여 주기 때문이다. CISA는 번호 매칭을 "not as strong as phishing-resistant MFA"이지만 "one of the best interim mitigation"이라고 평가했고, Microsoft는 2023-05-08부터 Authenticator 푸시 전체에 번호 매칭을 강제했다(지금은 끌 수 없다).</p>
+<p>NIST는 한 걸음 더 갔다. 63B-4 §3.1.3의 Note는 두 화면의 비밀을 "비교만 하고 승인"하는 방식을 "no longer considered acceptable"로 바꾸고 이유로 authentication fatigue를 든다(비밀 없이 승인만 누르는 방식은 애초에 63B의 out-of-band 인증기가 아니다). 대신 두 채널 사이에 비밀을 실제로 <i>옮기게</i> 요구하고, "Presenting the claimant with a list of secrets to compare is not sufficient" — 숫자 세 개 중 하나를 고르는 방식도 불충분하다고 본다. 그 비밀은 최소 6자리다(§3.1.3.2) — 두 자리 번호 매칭은 이 기준에 못 미친다. 또 푸시 발송 횟수에 상한을 두라고 권고한다(§3.1.3.2 SHOULD).</p>
+
+<h2>MFA가 실제로 얼마나 막나</h2>
+<p>Microsoft 연구진(Meyer 등, 2023)이 Entra ID 계정을 분석한 결과 MFA는 침해 위험을 전체적으로 <b>99.22%</b>, 유출된 크리덴셜이 있는 경우에도 <b>98.56%</b> 줄였고, 인증 앱이 SMS보다 효과가 컸다. 이 숫자가 말하는 것은 <i>대량 자동화 공격</i>에 대한 효과다 — 같은 회사의 MDDR 2024는 하루 6억 건 넘는 ID 공격 중 99% 이상이 패스워드 기반이라고 쓴다. 반대로 AiTM·토큰 탈취는 MFA를 전제로 설계된 공격이라 이 분모 밖에 있고, MDDR 2024는 토큰 탈취 사고가 하루 약 3.9만 건으로 늘었고 "over the last year we've seen a 146% rise in AiTM phishing attacks"라고 쓴다. 즉 MFA는 공격의 <i>양</i>을 줄이고 <i>종류</i>를 바꿨다. 0장의 "공격은 사라지지 않고 옮겨 간다"가 통계로 보이는 지점이다.</p>
+
+<h2>그래도 MFA가 못 막는 것 — 정리</h2>
+<table>
+  <tr><th>공격</th><th>왜 MFA(비피싱 내성)로 안 막히나</th><th>구조적 해법</th></tr>
+  <tr><td>AiTM 피싱</td><td>두 번째 요소가 origin을 모름. 결과물(세션)을 통째로 가져감</td><td>FIDO/패스키·PIV (origin·채널 바인딩)</td></tr>
+  <tr><td>세션·토큰 탈취 (인포스틸러)</td><td>인증 <i>이후</i>의 쿠키를 훔침. 어떤 MFA든 이미 지나간 단계</td><td>토큰 기기 바인딩, 짧은 수명, 위험 기반 재인증</td></tr>
+  <tr><td>MFA 피로 · 사회공학</td><td>사람이 승인 버튼을 누름</td><td>번호 매칭(완화), 승인할 것이 없는 FIDO</td></tr>
+  <tr><td>복구 경로 우회</td><td>"휴대폰 분실" 절차가 MFA를 건너뜀. 상담원 설득</td><td>복구 절차 강화 (7장 예정)</td></tr>
+  <tr><td>SIM 스와핑</td><td>SMS·전화 기반 요소와 복구가 통째로 넘어감</td><td>전화번호를 인증·복구에 안 씀</td></tr>
+  <tr><td>다운그레이드</td><td>강한 MFA 옆에 SMS·이메일 대체 경로가 열려 있음</td><td>약한 경로 제거 — 계정 강도 = 가장 약한 경로</td></tr>
+</table>
+
+<h2>흔한 오해</h2>
+<div class="box"><b>"2단계 인증을 켰으니 피싱은 걱정 없다."</b> 2단계의 두 번째가 SMS·TOTP·푸시면 AiTM 피싱은 그대로다. 사용자가 가짜 사이트에 로그인하는 순간 두 단계 모두 중계된다.</div>
+<div class="box"><b>"SMS는 NIST가 금지했다."</b> 63B-4에서도 PSTN(SMS·음성)은 금지가 아니라 유일한 <b>restricted authenticator</b>다(§3.2.9). "Use of the PSTN for out-of-band verification is restricted"(§3.1.3.3)이고, 쓰려면 제한되지 않은 대안 인증기를 최소 하나 제공해야 하며(SHALL), 기기 교체·SIM 변경·번호 이동 같은 위험 신호를 먼저 보라고 권고한다(SHOULD). AAL2에서도 허용된다. 금지된 쪽은 이메일이다.</div>
+<div class="box"><b>"푸시가 OTP보다 항상 낫다."</b> 피싱 사후 사용과 서버 비밀 유출은 낫고, MFA 피로에는 더 나쁘다. 번호 매칭이 붙으면 OTP와 같은 단(CISA)이고, AiTM은 똑같이 뚫린다.</div>
+<div class="box"><b>"MFA 99% 효과면 나머지 1%는 무시해도 된다."</b> 그 1%가 표적형 공격이고, 기업 침해 사고의 상당 부분이 거기서 나온다. 효과 통계는 공격의 분모가 무엇이냐에 따라 의미가 바뀐다.</div>
+
+<h2>내 연구와의 접점</h2>
+<div class="box">MFA는 내 연구 대상(사람이 고른 패스워드)을 없애지 않고 <i>가치를 할인</i>한다. 이 할인율이 공격자의 선택을 바꾼다: 패스워드만으로 계정이 열리면 추측·스터핑이 가장 싸고, MFA가 붙으면 패스워드는 AiTM·피로 공격의 "입장권"으로만 쓰인다. 그래서 MFA 환경에서도 PentaPassBreaker 같은 표적 추측 모델은 쓸모가 사라지지 않는다 — MFA 피로 공격의 첫 단계가 "유효한 패스워드 확보"이기 때문이다(Uber·Cisco 모두 그랬다). 연구 질문으로 옮기면: PSI가 낮은 서비스(패스워드 확보 비용이 낮은 곳)에서 MFA 피로·AiTM의 비중이 높게 나타나는가. 공격 비용 모델에서 패스워드 강도와 두 번째 요소 종류는 곱해지는 항이다.</div>
+
+<h2>참고 표준·문헌 (확인한 것)</h2>
+<ul class="refs">
+  <li><a href="https://pages.nist.gov/800-63-4/sp800-63b.html">NIST SP 800-63B-4</a> §2.2, §3.1.3 Note(승인만 방식 불인정), §3.1.3.1 이메일 SHALL NOT, §3.1.3.2 푸시 횟수 제한, §3.1.3.3 PSTN restricted, §3.2.5 phishing resistance 정의·manual entry, §3.2.9 restricted authenticators (원문 대조), §3.1.3.2 OOB 비밀 최소 6자리</li>
+  <li>CISA <a href="https://www.cisa.gov/sites/default/files/publications/fact-sheet-implement-number-matching-in-mfa-applications-508c.pdf">Number Matching</a>·<a href="https://www.cisa.gov/sites/default/files/publications/fact-sheet-implementing-phishing-resistant-mfa-508c.pdf">Phishing-Resistant MFA</a> 팩트시트 (2022-10) — Table 1 네 단 (원문 대조)</li>
+  <li><a href="https://github.com/kgretzky/evilginx2">Evilginx</a> README — "man-in-the-middle attack framework used for phishing login credentials along with session cookies, which in turn allows to bypass 2-factor authentication protection", 원판 2017</li>
+  <li><a href="https://www.uber.com/newsroom/security-update/">Uber security update</a> (2022-09-15~19) · <a href="https://blog.talosintelligence.com/recent-cyber-attack/">Cisco Talos</a> (2022-08-10) — 원문 대조. Uber WhatsApp 진술은 BleepingComputer 보도</li>
+  <li>Lee·Kaiser·Mayer·Narayanan, <a href="https://www.usenix.org/system/files/soups2020-lee.pdf">SIM swap 연구</a> (SOUPS 2020) — 39/50, 17개 사이트 (원문 대조). FCC 23-95 (2023-11-15 채택)</li>
+  <li>Meyer et al., <a href="https://arxiv.org/abs/2305.00945">How effective is multifactor authentication…</a> (2023) — 99.22% / 98.56%. <a href="https://go.microsoft.com/fwlink/?linkid=2290930">Microsoft Digital Defense Report 2024</a> — 6억 건·99%, 토큰 탈취 3.9만 건/일, AiTM 146% 증가. 번호 매칭 강제 2023-05-08 (BleepingComputer, MS Learn)</li>
+</ul>
+<nav class="prevnext"><a href="otp.html">← HOTP·TOTP와 공유 비밀</a><a href="pki.html">챌린지-응답과 PKI·인증서 →</a></nav>
+</main>
+</div>
+<footer class="site">전동호 (David Jeon) · 1차 출처(RFC·W3C/FIDO·NIST SP) 대조 후 확정한 내용만 "확정", 아니면 "추정"으로 표시</footer>
+</body>
+</html>
