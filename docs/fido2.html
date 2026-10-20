@@ -21,8 +21,8 @@
 </ul></li>
 <li class="chap">1. 패스워드<ul>
 <li><a href="password-storage.html">서버 저장: 해시·솔트·KDF</a></li>
-<li><a href="password-policy.html">정책의 역사와 NIST SP 800-63B</a></li>
 <li><a href="password-guessing.html">추측 모델 계보와 강도 추정</a></li>
+<li><a href="password-policy.html">정책의 역사와 NIST SP 800-63B</a></li>
 <li><a href="password-managers.html">패스워드 관리자</a></li>
 </ul></li>
 <li class="chap">2. OTP와 MFA<ul>
@@ -165,7 +165,7 @@
 <p class="cap">authData = rpIdHash ‖ flags(UP·UV·BE·BS) ‖ signCount ‖ (등록 시 credId·공개키). 사용자는 2·6 단계에서 인증기를 터치하거나 PIN·생체를 넣는다 — 그 결과는 flags 비트로만 서버에 간다.</p>
 
 <h2>왜 피싱이 안 되나 — 조건 세 개가 동시에</h2>
-<div class="box"><b>① 브라우저가 RP ID를 origin과 대조한다.</b> WebAuthn L3 §4: "The RP ID must be equal to the origin's effective domain, or a registrable domain suffix of the origin's effective domain." 사용자가 <code>https://examp1e.com</code>(가짜)에 있으면 그 페이지는 <code>rpId: "example.com"</code>를 요청할 수 없다 — 브라우저가 §5.1.4 단계에서 <code>SecurityError</code>를 던진다. 가짜 사이트가 자기 도메인으로 요청하면 인증기에는 그 rpId로 만든 키가 없어서 서명할 것이 없다(§6.1: 인증기는 "the RP ID that the requested credential is scoped to exactly matches the RP ID supplied by the client"를 확인).</div>
+<div class="box"><b>① 브라우저가 RP ID를 origin과 대조한다.</b> WebAuthn L3 §5.11: "By default, Web Authentication requires that the RP ID be equal to the origin's effective domain, or a registrable domain suffix of the origin's effective domain." (L3가 추가한 related-origin은 RP가 .well-known으로 명시 opt-in해야 하므로 가짜 도메인에는 해당 없음.) 사용자가 <code>https://examp1e.com</code>(가짜)에 있으면 그 페이지는 <code>rpId: "example.com"</code>를 요청할 수 없다 — 브라우저가 §5.1.4 단계에서 <code>SecurityError</code>를 던진다. 가짜 사이트가 자기 도메인으로 요청하면 인증기에는 그 rpId로 만든 키가 없어서 서명할 것이 없다(§6.1: 인증기는 "the RP ID that the requested credential is scoped to exactly matches the RP ID supplied by the client"를 확인).</div>
 <div class="box"><b>② 서명 안에 origin이 들어간다.</b> 인증기가 서명하는 것은 <code>authenticatorData ‖ SHA-256(clientDataJSON)</code>이고(§6.3.3), clientDataJSON에는 <code>origin</code>과 <code>challenge</code>가 있다(§5.8.1). 그래서 어떤 경로로 서명을 얻더라도 서버가 origin을 대조하면 다른 도메인에서 만든 서명은 걸린다. AiTM 프록시가 중계해도 프록시의 origin이 박힌다.</div>
 <div class="box"><b>③ 개인키가 기기 밖으로 안 나가고, 사용자는 비밀을 입력하지 않는다.</b> 사용자가 입력하는 PIN·생체는 인증기 안에서 UV에만 쓰이고 네트워크로 가지 않는다(§4 User Verification: "locally authorizes the invocation"). 옮겨 적을 코드가 없으니 피싱 페이지가 받아 갈 것도 없다.</div>
 <p>세 조건 중 하나만 있으면 안 된다. 공동인증서는 ③의 절반(개인키가 파일)과 ①②가 없어서 가짜 사이트에도 서명해 주고, TOTP는 ①②가 없어서 코드가 중계된다. 3장·2장에서 각각 다룬다.</p>
@@ -208,16 +208,16 @@
 <div class="box"><b>"피싱 내성이 있으니 MFA다."</b> 반대다. 피싱 내성과 요소 수는 별개(0장). UV 없는 보안키 터치는 1요소이면서 피싱 내성이고, 패스워드+TOTP는 2요소이면서 피싱 취약이다.</div>
 
 <h2>내 연구와의 접점</h2>
-<div class="box">FIDO2가 없애는 것은 정확히 내 논문의 대상 — <b>"사람이 고른 비밀"</b>이다. 키는 난수, 사이트마다 다르고, 서버엔 공개키만. 전이 예측(PPB)도 서비스별 예측 가능성(PSI)도 정의상 사라진다. 남는 질문은 두 가지. 첫째, 이 자격증명을 <i>등록·복구</i>하는 절차에 패스워드가 남아 있는가(거의 항상 남아 있다). 둘째, 어떤 서비스가 실제로 도입했는가(Top-100K의 11.3%). 내 논문이 재는 층은 그 89%와, 11%의 복구 경로다.</div>
+<div class="box">FIDO2가 없애는 것은 정확히 내 논문의 대상 — <b>"사람이 고른 비밀"</b>이다. 키는 난수, 사이트마다 다르고, 서버엔 공개키만. 전이 예측(PPB)도 서비스별 예측 가능성(PSI)도 정의상 사라진다. 남는 질문은 두 가지. 첫째, 이 자격증명을 <i>등록·복구</i>하는 절차에 패스워드가 남아 있는가(거의 항상 남아 있다). 둘째, 어떤 서비스가 실제로 도입했는가(Top-100K 중 스캔 가능 사이트의 11.3%, 9,397개). 내 논문이 재는 층은 그 89%와, 11%의 복구 경로다.</div>
 
 <h2>참고 표준·문헌 (확인한 것)</h2>
 <ul class="refs">
   <li><a href="https://www.w3.org/TR/webauthn-3/">Web Authentication: An API for accessing Public Key Credentials Level 3</a>, W3C Recommendation 2026-08-25 — §4 용어(RP ID 규칙, discoverable credential, UV/UP, attestation), §5.1.3·§5.1.4 rpId 검증과 SecurityError, §5.4.7 AttestationConveyancePreference, §5.8.1 CollectedClientData(type·challenge·origin·crossOrigin·topOrigin), §6.1 authenticator data flags(UP bit0, UV bit2, BE bit3, BS bit4)와 rpIdHash, §6.3.3 서명 = authenticatorData ‖ hash, §7.1 step 14 rpIdHash 검증. 인용문은 전부 HTML판에서 직접 확인</li>
-  <li><a href="https://fidoalliance.org/fido2/">FIDO Alliance — FIDO2</a> — "FIDO2 is an open authentication standard that was developed by the FIDO Alliance." WebAuthn+CTAP 구성과 CTAP 2.2 언급은 <span class="est">추정</span> (페이지 요약에서만 확인)</li>
+  <li><a href="https://fidoalliance.org/fido2/">FIDO Alliance — FIDO2</a> — "FIDO2 is an open authentication standard that was developed by the FIDO Alliance." WebAuthn+CTAP 구성과 CTAP 2.2 Proposed Standard 2025-02-28, 이후 CTAP 2.3 발행(호환, 인증은 2.3 기준)</li>
   <li><a href="https://passkeys.dev/docs/reference/terms/">passkeys.dev Terms</a> (2026-02) — "Roaming authenticators attach to users' devices in using USB, NFC, and/or Bluetooth", hybrid transport = CTAP</li>
   <li>FIDO 1.0 (UAF·U2F) 최종 2014-12-09 — 0장 역사 페이지 참조</li>
 </ul>
-
+<nav class="prevnext"><a href="password-managers.html">← 패스워드 관리자</a><a href="passkeys.html">패스키: synced vs device-bound →</a></nav>
 </main>
 </div>
 <footer class="site">전동호 (David Jeon) · 1차 출처(RFC·W3C/FIDO·NIST SP) 대조 후 확정한 내용만 "확정", 아니면 "추정"으로 표시</footer>

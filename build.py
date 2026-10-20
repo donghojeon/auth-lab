@@ -16,8 +16,8 @@ TOC = [
                         ("basics", "식별·인증·인가와 인증 요소"),
                         ("threats", "위협 모델 어휘")]),
     ("1. 패스워드", [("password-storage", "서버 저장: 해시·솔트·KDF"),
-                     ("password-policy", "정책의 역사와 NIST SP 800-63B"),
                      ("password-guessing", "추측 모델 계보와 강도 추정"),
+                     ("password-policy", "정책의 역사와 NIST SP 800-63B"),
                      ("password-managers", "패스워드 관리자")]),
     ("2. OTP와 MFA", [("otp", "HOTP·TOTP와 공유 비밀"),
                       ("mfa", "푸시·SMS·MFA 피로, 그리고 MFA가 못 막는 것")]),
@@ -57,6 +57,17 @@ def nav_html(current):
     return "\n".join(out)
 
 
+def prevnext_html(slug):
+    """커리큘럼 순서에서 이전·다음 '작성된' 페이지 링크."""
+    written = [(s, t) for _, pages in TOC for s, t in pages if (SRC / f"{s}.html").exists()]
+    i = next((k for k, (s, _) in enumerate(written) if s == slug), None)
+    if i is None:
+        return ""
+    prev = f'<a href="{written[i-1][0]}.html">← {written[i-1][1]}</a>' if i > 0 else "<span></span>"
+    nxt = f'<a href="{written[i+1][0]}.html">{written[i+1][1]} →</a>' if i + 1 < len(written) else "<span></span>"
+    return f'<nav class="prevnext">{prev}{nxt}</nav>'
+
+
 def main():
     titles = {slug: title for _, pages in TOC for slug, title in pages}
     layout = (ROOT / "layout.html").read_text()
@@ -67,7 +78,7 @@ def main():
     for src in sorted(SRC.glob("*.html")):
         slug = src.stem
         title = "사용자 인증 연구소" if slug == "index" else titles[slug]
-        body = src.read_text().replace("{{toc}}", nav_html(None))
+        body = src.read_text().replace("{{toc}}", nav_html(None)) + prevnext_html(slug)
         html = (layout.replace("{{title}}", title)
                       .replace("{{nav}}", nav_html(slug))
                       .replace("{{body}}", body))

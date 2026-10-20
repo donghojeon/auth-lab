@@ -21,8 +21,8 @@
 </ul></li>
 <li class="chap">1. 패스워드<ul>
 <li><a href="password-storage.html">서버 저장: 해시·솔트·KDF</a></li>
-<li><a href="password-policy.html">정책의 역사와 NIST SP 800-63B</a></li>
 <li><a href="password-guessing.html">추측 모델 계보와 강도 추정</a></li>
+<li><a href="password-policy.html">정책의 역사와 NIST SP 800-63B</a></li>
 <li><a href="password-managers.html">패스워드 관리자</a></li>
 </ul></li>
 <li class="chap">2. OTP와 MFA<ul>
@@ -120,7 +120,7 @@
   <text x="490" y="256" text-anchor="middle" fill="#b91c1c" font-weight="700">복구 (recovery) — 인증기를 잃었을 때</text>
   <text x="490" y="300" text-anchor="middle" fill="#5c6474" font-size="11.5">복구는 "인증 없이 등록을 다시 하는 길". 그래서 복구 경로의 강도가 계정 전체 강도의 상한이 된다.</text>
 </svg>
-<p class="cap">NIST SP 800-63-4는 이 그림을 그대로 세 권으로 나눈다: 63A 등록·신원 확인, 63B 인증·생애주기, 63C 연합.</p>
+<p class="cap">NIST SP 800-63-4는 총론 외에 이 그림을 그대로 세 권으로 나눈다: 63A 등록·신원 확인, 63B 인증·생애주기, 63C 연합.</p>
 
 <h2>세 단어가 자주 섞이는 이유</h2>
 <p>로그인 화면에서는 식별과 인증이 한 화면에 붙어 있다. 아이디 입력이 식별이고, 패스워드 입력이 인증이다. 아이디는 비밀이 아니라 <i>주장</i>일 뿐이라 누구나 남의 아이디를 칠 수 있고, 그래서 아이디만 아는 공격자가 할 수 있는 일(온라인 추측, 비밀번호 찾기 남용)이 위협 모델의 출발점이 된다. 인가는 인증 뒤에 오지만 인증이 보장하지 않는다. "jdh가 맞다"와 "jdh가 이 파일을 열어도 된다"는 별개의 결정이고, Kerberos의 PAC나 OIDC 토큰의 claims처럼 인증 결과에 인가 정보를 <i>실어 보내는</i> 설계가 많아서 둘이 하나처럼 보일 뿐이다.</p>
@@ -129,7 +129,7 @@
 <p>NIST는 인증기(authenticator)를 그것이 증명하는 것으로 분류한다. 패스워드는 "something you know", OTP 기기·암호 키·전화는 "something you have", 생체는 "something you are"다. 중요한 건 800-63B-4가 생체를 <b>단독 요소로 인정하지 않는다</b>는 점이다. 원문은 "Biometrics SHALL only be used as part of multi-factor authentication with a physical authenticator"(§3.2.3)이고, AAL2·AAL3 조항에는 "A biometric characteristic is not recognized as an authenticator by itself"라고 못 박혀 있다. 생체는 그 자체가 비밀이 아니고(지문은 유리컵에 남는다), 유출되면 바꿀 수 없기 때문이다. 그래서 실무에서 생체는 거의 항상 <i>기기 안의 키를 꺼내는 잠금 해제</i>로 쓰인다.</p>
 <table>
   <tr><th>인증기 (800-63B-4 §3.1)</th><th>요소</th><th>예</th></tr>
-  <tr><td>패스워드 (memorized secret)</td><td>know</td><td>로그인 패스워드, PIN</td></tr>
+  <tr><td>패스워드 (password; 63B-3의 memorized secret)</td><td>know</td><td>로그인 패스워드, PIN</td></tr>
   <tr><td>룩업 시크릿 · 대역외(out-of-band)</td><td>have</td><td>복구 코드 목록, SMS·푸시 승인</td></tr>
   <tr><td>단일 요소 OTP</td><td>have</td><td>TOTP 앱, 하드웨어 OTP 토큰</td></tr>
   <tr><td>다중 요소 OTP</td><td>have + (know 또는 are)로 활성화</td><td>PIN·지문으로 여는 OTP 토큰</td></tr>
@@ -139,7 +139,7 @@
 <p class="cap">표 안의 "have + 활성화"가 핵심이다. 패스키 하나가 두 요소로 계산되는 이유 — 기기가 have, 잠금 해제가 know/are.</p>
 
 <h2>요소 수 ≠ 강도</h2>
-<p>"2단계 인증이니 안전하다"는 말은 요소의 <i>개수</i>를 세는 것이다. 그런데 NIST의 강도 척도인 AAL(Authenticator Assurance Level)은 개수가 아니라 <b>공격자가 무엇을 해야 뚫리는가</b>로 정의된다. 원문: "AALs categorize the strength of an authentication transaction… Stronger authentication (i.e., a higher AAL) requires malicious actors to have better capabilities and to expend greater resources"(§2). 같은 두 요소라도 패스워드+SMS OTP는 공격자가 가짜 로그인 페이지 하나로 둘 다 받아 쓸 수 있고(AiTM 피싱), 패스키 하나는 도메인이 다르면 브라우저가 서명을 거부한다. 그래서 800-63B-4는 피싱 내성을 요소 수와 별도의 속성으로 두고, AAL2에서 "Verifiers SHALL offer at least one phishing-resistant authentication option"(§2.2), AAL3에서는 "SHALL have a non-exportable private key and SHALL provide phishing resistance"(§2.3)를 요구한다.</p>
+<p>"2단계 인증이니 안전하다"는 말은 요소의 <i>개수</i>를 세는 것이다. 그런데 NIST의 강도 척도인 AAL(Authenticator Assurance Level)은 개수가 아니라 <b>공격자가 무엇을 해야 뚫리는가</b>로 정의된다. 원문: "AALs categorize the strength of an authentication transaction… Stronger authentication (i.e., a higher AAL) requires malicious actors to have better capabilities and to expend greater resources"(§1 Introduction). 같은 두 요소라도 패스워드+SMS OTP는 공격자가 가짜 로그인 페이지 하나로 둘 다 받아 쓸 수 있고(AiTM 피싱), 패스키 하나는 도메인이 다르면 브라우저가 서명을 거부한다. 그래서 800-63B-4는 피싱 내성을 요소 수와 별도의 속성으로 두고, AAL2에서 "Verifiers SHALL offer at least one phishing-resistant authentication option"(§2.2), AAL3에서는 "SHALL have a non-exportable private key and SHALL provide phishing resistance"(§2.3)를 요구한다.</p>
 <table>
   <tr><th>AAL</th><th>요소</th><th>피싱 내성</th><th>개인키 반출</th><th>전형적 조합</th></tr>
   <tr><td>AAL1</td><td>1개 이상</td><td class="na">요구 없음</td><td class="na">—</td><td>패스워드 단독, 패스워드+SMS</td></tr>
@@ -149,7 +149,7 @@
 <p class="cap">읽는 법: 패스워드+SMS와 패스워드+TOTP는 "요소 2개"로 같지만 둘 다 AiTM 피싱에 뚫린다. 패스키는 "인증기 1개"지만 AAL2를 채우고, 하드웨어에 묶이면 AAL3까지 간다.</p>
 
 <h2>보안 vs 사용성 — 처음부터 타협이었다</h2>
-<p>1979년 Morris와 Thompson은 Unix 패스워드 설계를 "a compromise between extreme security and ease of use"라고 썼다. 이 타협은 45년째 같은 모양이다. 보안을 올리면(길고 복잡하고 자주 바꾸는 패스워드, 하드웨어 키, 재등록 절차) 사람이 우회하고(재사용, 패턴, 키 분실 시 고객센터), 사용성을 올리면(SMS, 푸시 승인, 이메일 복구) 공격 표면이 커진다. 2017년 이후 NIST가 구성 규칙을 버리고 길이·유출 대조로 간 것, FIDO가 "생체로 잠금 해제 + 기기가 서명"을 고른 것은 모두 이 타협점을 옮긴 결정이지 타협을 없앤 결정이 아니다. 어떤 인증 방식을 평가할 때 "더 안전한가"만 물으면 반쪽이고, "사람이 그걸 쓰면서 무엇을 우회할 것인가"까지 물어야 한다.</p>
+<p>1979년 Morris와 Thompson은 Unix 패스워드 설계를 "a compromise between extreme security and ease of use"라고 썼다. 이 타협은 47년째 같은 모양이다. 보안을 올리면(길고 복잡하고 자주 바꾸는 패스워드, 하드웨어 키, 재등록 절차) 사람이 우회하고(재사용, 패턴, 키 분실 시 고객센터), 사용성을 올리면(SMS, 푸시 승인, 이메일 복구) 공격 표면이 커진다. 2017년 이후 NIST가 구성 규칙을 버리고 길이·유출 대조로 간 것, FIDO가 "생체로 잠금 해제 + 기기가 서명"을 고른 것은 모두 이 타협점을 옮긴 결정이지 타협을 없앤 결정이 아니다. 어떤 인증 방식을 평가할 때 "더 안전한가"만 물으면 반쪽이고, "사람이 그걸 쓰면서 무엇을 우회할 것인가"까지 물어야 한다.</p>
 
 <h2>등록과 복구가 가장 약한 고리인 이유</h2>
 <p>위 도식에서 인증은 가운데 한 칸이지만 공격자는 세 칸 어디로든 들어온다. <b>등록</b>이 약하면 애초에 남의 이름으로 계정을 만들거나(신원 확인 실패), 남의 계정에 내 인증기를 묶는다(바인딩 실패 — 패스키 보안이 "서버의 등록 절차 보안"으로 환원되는 이유). <b>복구</b>는 정의상 "인증기 없이 인증기를 다시 받는 길"이라, 복구 경로가 이메일이면 계정 강도는 이메일 패스워드 강도이고, 복구가 고객센터면 상담원의 판단 강도다. 하드웨어 보안키로 AAL3를 만들어 놓고 "키를 잃었으면 SMS로 재설정"을 열어 두면 그 계정은 SMS 수준이다. 그래서 이 사이트는 7장을 따로 둔다.</p>
@@ -164,11 +164,11 @@
 
 <h2>참고 표준·문헌 (확인한 것)</h2>
 <ul class="refs">
-  <li><a href="https://pages.nist.gov/800-63-4/sp800-63b.html">NIST SP 800-63B-4</a> (2025-07) — §2 AAL 정의 인용, §2.1 AAL1 단일 요소 허용, §2.2 AAL2 피싱 내성 옵션 SHALL offer / SHOULD encourage, §2.3 AAL3 non-exportable + phishing resistance SHALL, §3.1 인증기 유형별 요소, §3.2.3 생체 단독 불허, §3.2.5 phishing resistance (구 verifier impersonation resistance). 인용문은 HTML판에서 직접 확인</li>
+  <li><a href="https://pages.nist.gov/800-63-4/sp800-63b.html">NIST SP 800-63B-4</a> (2025-07) — §1 Introduction의 AAL 강도 정의 인용, §2.1 AAL1 단일 요소 허용, §2.2 AAL2 피싱 내성 옵션 SHALL offer / SHOULD encourage, §2.3 AAL3 non-exportable + phishing resistance SHALL, §3.1 인증기 유형별 요소, §3.2.3 생체 단독 불허, §3.2.5 phishing resistance (구 verifier impersonation resistance). 인용문은 HTML판에서 직접 확인</li>
   <li><a href="https://csrc.nist.gov/pubs/sp/800/63/4/final">NIST SP 800-63-4</a> 총론 — 63A(등록·신원 확인) / 63B(인증) / 63C(연합) 분권 구조</li>
   <li>Morris &amp; Thompson, <a href="https://www.profsandhu.com/cs6393_s20/p594-morris.pdf">"Password Security: A Case History"</a>, CACM 1979 — "compromise between extreme security and ease of use"</li>
 </ul>
-
+<nav class="prevnext"><a href="history.html">← 인증의 역사 — 한 장의 맵</a><a href="threats.html">위협 모델 어휘 →</a></nav>
 </main>
 </div>
 <footer class="site">전동호 (David Jeon) · 1차 출처(RFC·W3C/FIDO·NIST SP) 대조 후 확정한 내용만 "확정", 아니면 "추정"으로 표시</footer>

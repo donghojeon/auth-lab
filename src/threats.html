@@ -64,21 +64,21 @@
 </table>
 
 <h2>온라인 추측과 오프라인 추측은 10억 배 다르다</h2>
-<p>둘 다 "추측"이지만 공격자가 서 있는 자리가 다르다. <b>온라인</b>은 서버의 로그인 API에 한 번씩 물어보는 것이라 서버가 세고 막을 수 있다. NIST 63B-4는 한 계정에 연속 실패 100회를 넘기지 못하게 제한하라고 하고(§3.2.2 throttling), 실제 서비스는 캡차·지연·잠금을 쓴다. 그래서 온라인 추측에서 의미 있는 건 "상위 100개 패스워드에 들어가는가"다. <b>오프라인</b>은 유출된 해시를 공격자 자기 GPU로 돌리는 것이라 제한이 없다. hashcat 공개 벤치마크 기준 RTX 4090 한 장이 MD5는 초당 약 10<sup>11</sup>회, bcrypt(cost 5)는 약 10<sup>5</sup>회 수준이다(<span class="est">추정</span>: 벤치마크 수치는 버전·설정에 따라 다름). 즉 해시 함수 선택이 10<sup>6</sup>배를 가르고, 그 위에서 "사람이 고른 패스워드의 예측 가능성"이 나머지를 가른다.</p>
+<p>둘 다 "추측"이지만 공격자가 서 있는 자리가 다르다. <b>온라인</b>은 서버의 로그인 API에 한 번씩 물어보는 것이라 서버가 세고 막을 수 있다. NIST 63B-4는 인증기당 연속 실패 100회 이하에서 그 인증기를 비활성화하라고 하고(§3.2.2 Rate Limiting), 실제 서비스는 캡차·지연·잠금을 쓴다. 그래서 온라인 추측에서 의미 있는 건 "상위 100개 패스워드에 들어가는가"다. <b>오프라인</b>은 유출된 해시를 공격자 자기 GPU로 돌리는 것이라 제한이 없다. hashcat 공개 벤치마크 기준 RTX 4090 한 장이 MD5는 초당 약 10<sup>11</sup>회, bcrypt(cost 5)는 약 10<sup>5</sup>회 수준이다(<span class="est">추정</span>: 벤치마크 수치는 버전·설정에 따라 다름). 즉 해시 함수 선택이 10<sup>6</sup>배를 가르고, 그 위에서 "사람이 고른 패스워드의 예측 가능성"이 나머지를 가른다.</p>
 <p>이 구분이 방식 비교의 기준이 된다. 패스워드는 둘 다 당한다. Kerberos는 온라인은 막지만(서버가 세지 않음 — 티켓만 요청하면 됨) 오프라인은 당한다(Kerberoasting). TOTP는 seed가 유출되면 추측할 것도 없이 끝이다. FIDO는 서버에 공개키만 있어 둘 다 성립하지 않는다.</p>
 
 <h2>흔한 오해</h2>
 <div class="box"><b>"피싱과 AiTM은 같은 것."</b> 피싱은 비밀을 받아 <i>나중에</i> 쓰고, AiTM은 세션을 <i>실시간으로</i> 가로챈다. 그래서 1회용 코드(TOTP)는 피싱엔 어느 정도 버티지만 AiTM엔 그대로 뚫린다. MFA 도입 후 공격이 AiTM으로 이동한 이유.</div>
 <div class="box"><b>"피싱 내성 = 사용자가 속지 않음."</b> 아니다. 사용자가 완전히 속아 가짜 사이트에서 로그인을 시도해도 <i>브라우저와 인증기가</i> 도메인 불일치로 서명을 안 만드는 것이 피싱 내성이다. 사람의 판단을 빼는 것.</div>
-<div class="box"><b>"패스키면 계정 탈취는 끝."</b> 패스키가 막는 건 추측·스터핑·피싱·AiTM, 즉 <i>인증 단계</i>의 공격이다. 세션 탈취·단말 감염·복구 남용은 표면이 달라 그대로 남는다. 2024년 이후 ID 공격이 토큰 탈취로 이동한 배경.</div>
+<div class="box"><b>"패스키면 계정 탈취는 끝."</b> 패스키가 막는 건 추측·스터핑·피싱·AiTM, 즉 <i>인증 단계</i>의 공격이다. 세션 탈취·단말 감염·복구 남용은 표면이 달라 그대로 남는다. Microsoft가 2022~23년부터 토큰 탈취 증가를 경고한 배경.</div>
 
 <h2>내 연구와의 접점</h2>
 <div class="box">내 논문 두 편은 이 표의 세 줄만 다룬다 — <b>온라인 추측·오프라인 추측·크리덴셜 스터핑(재사용·전이)</b>. 공통점은 전부 "사람이 고른 비밀의 예측 가능성"에서 나오는 공격이라는 것. PSI가 높은 서비스라도 피싱·세션 탈취·복구 남용에는 아무 말도 못 하며, 반대로 패스키가 이 세 줄을 구조적으로 없애더라도 나머지 열 줄이 남는다. "패스워드 이후"를 공부하는 이유가 이 표의 나머지 열 줄이다.</div>
 
 <h2>참고 표준·문헌 (확인한 것)</h2>
 <ul class="refs">
-  <li><a href="https://pages.nist.gov/800-63-4/sp800-63b.html">NIST SP 800-63B-4</a> §8 Threats and Security Considerations — 인증기 위협 표(assertion manufacture/theft/duplication, eavesdropping, offline cracking, side channel, phishing, online guessing, endpoint compromise, unauthorized binding). 본 페이지 표는 이 목록에 세션·연합 쪽(세션 탈취·토큰 위조·MFA 피로·SIM 스와핑)을 더한 것. §3.2.2 throttling(연속 실패 100회) — 조항 번호는 63B-3 §5.2.2 기준이며 63B-4 번호는 <span class="est">추정</span></li>
+  <li><a href="https://pages.nist.gov/800-63-4/sp800-63b.html">NIST SP 800-63B-4</a> §6 Threats and Security Considerations (63B-3에서는 §8) Table 3 인증기 위협 표 — theft, duplication, eavesdropping, offline cracking, side-channel, phishing/pharming, social engineering, authentication fatigue, online guessing, endpoint compromise, unauthorized binding, latent keys, key proliferation/transfer, untrusted devices, insider. 본 페이지 표는 이 중 인증 단계 항목에 세션·연합 쪽(세션 탈취·토큰 위조·SIM 스와핑)을 더한 것. §3.2.2 Rate Limiting — "limit consecutive failed authentication attempts … to no more than 100 by disabling that authenticator", 100은 상한이고 더 낮게 MAY (원문 대조)</li>
   <li><a href="https://attack.mitre.org/tactics/TA0006/">MITRE ATT&amp;CK Credential Access</a> — T1110 Brute Force(.001 guessing, .002 cracking, .003 spraying, .004 stuffing), T1557 AiTM, T1539 Steal Web Session Cookie, T1550.003 Pass the Ticket, T1558 Steal or Forge Kerberos Tickets, T1621 MFA Request Generation, T1566 Phishing, T1451 SIM Card Swap(모바일 매트릭스)</li>
   <li><a href="https://hashcat.net/forum/thread-11277.html">hashcat RTX 4090 벤치마크</a> (공개 포럼 스레드, <span class="est">추정</span>: 수치는 대략값)</li>
-  <li>WebAuthn Level 3 §4 Relying Party Identifier — "The RP ID must be equal to the origin's effective domain, or a registrable domain suffix of the origin's effective domain" (피싱 내성의 근거. 4장에서 상세)</li>
+  <li>WebAuthn Level 3 §5.11 — "By default, Web Authentication requires that the RP ID be equal to the origin's effective domain, or a registrable domain suffix of the origin's effective domain" (피싱 내성의 근거. 4장에서 상세)</li>
 </ul>

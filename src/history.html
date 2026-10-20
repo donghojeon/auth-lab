@@ -43,7 +43,7 @@
     <circle cx="643" cy="96" r="5" fill="#fff" stroke="#0a4fd6" stroke-width="2"/>
     <text x="643" y="72" text-anchor="middle" font-weight="700">2004</text><text x="643" y="84" text-anchor="middle">NIST SP 800-63</text>
     <circle cx="795" cy="96" r="5" fill="#fff" stroke="#0a4fd6" stroke-width="2"/>
-    <text x="795" y="118" text-anchor="middle" font-weight="700">2017</text><text x="795" y="130" text-anchor="middle">800-63-3: 구성 규칙·</text><text x="795" y="142" text-anchor="middle">주기 변경 철회</text>
+    <text x="795" y="118" text-anchor="middle" font-weight="700">2017</text><text x="795" y="130" text-anchor="middle">800-63-3: 구성 규칙 철회</text><text x="795" y="142" text-anchor="middle">주기 변경 금지</text>
     <circle cx="889" cy="96" r="5" fill="#fff" stroke="#0a4fd6" stroke-width="2"/>
     <text x="889" y="72" text-anchor="middle" font-weight="700">2025</text><text x="889" y="84" text-anchor="middle">800-63-4</text>
   </g>
@@ -84,7 +84,7 @@
     <circle cx="340" cy="446" r="5" fill="#fff" stroke="#7c3aed" stroke-width="2"/>
     <text x="340" y="422" text-anchor="middle" font-weight="700">1978</text><text x="340" y="434" text-anchor="middle">Needham–Schroeder</text>
     <circle cx="457" cy="446" r="5" fill="#fff" stroke="#7c3aed" stroke-width="2"/>
-    <text x="457" y="468" text-anchor="middle" font-weight="700">1988</text><text x="457" y="480" text-anchor="middle">Kerberos v4 (MIT Athena)</text>
+    <text x="457" y="468" text-anchor="middle" font-weight="700">1988</text><text x="457" y="480" text-anchor="middle">Kerberos 논문 (v4 공개 1989)</text>
     <circle cx="515" cy="446" r="5" fill="#fff" stroke="#7c3aed" stroke-width="2"/>
     <text x="515" y="422" text-anchor="middle" font-weight="700">1993</text><text x="515" y="434" text-anchor="middle">Kerberos v5 (RFC 1510)</text>
     <circle cx="597" cy="446" r="5" fill="#fff" stroke="#7c3aed" stroke-width="2"/>
@@ -110,16 +110,16 @@
 
 <h2>네 개의 레인, 네 개의 이야기</h2>
 
-<p><b>지식 레인은 60년 동안 한 번도 1위를 내주지 않았다.</b> 1961년 MIT CTSS가 시분할 시스템의 파일을 사용자별로 나누려고 패스워드를 붙인 것이 시작이고, 1979년 Morris와 Thompson이 Unix 패스워드 파일이 평문으로 뚫리는 걸 보고 "솔트를 섞어 느린 해시로 저장하라"는 처방을 내놓은 것이 오늘날 bcrypt·Argon2까지 이어지는 서버 저장 방식의 원형이다. 그 뒤 이 레인에서 일어난 일은 방식의 변화가 아니라 <i>정책</i>의 변화다. 2004년 NIST SP 800-63 초판이 구성 규칙과 주기적 변경을 권고했고, 전 세계 기업이 AD 정책으로 이를 복제했다. 13년 뒤인 2017년 800-63-3은 그 규칙들이 사람을 예측 가능한 쪽으로 몰았다는 근거로 철회했고, 2025년 800-63-4는 유출 목록 대조와 길이 중심으로 굳혔다. 방식은 그대로, 사람의 행동을 어떻게 다룰지만 바뀐 것이다.</p>
+<p><b>지식 레인은 60년 동안 한 번도 1위를 내주지 않았다.</b> 1961년 MIT CTSS가 시분할 시스템의 파일을 사용자별로 나누려고 패스워드를 붙인 것이 시작이고, 1979년 Morris와 Thompson이 Unix 패스워드 파일이 평문으로 뚫리는 걸 보고 "솔트를 섞어 느린 해시로 저장하라"는 처방을 내놓은 것이 오늘날 bcrypt·Argon2까지 이어지는 서버 저장 방식의 원형이다. 그 뒤 이 레인에서 일어난 일은 방식의 변화가 아니라 <i>정책</i>의 변화다. 2004년 NIST SP 800-63 초판(부록 A)이 구성 규칙·사전 검사를 엔트로피 가산 요소로 인정했고, 주기적 변경은 문서가 아니라 당시 관행(Burr의 2017년 회고)이 밀어붙였으며, 전 세계 기업이 AD 정책으로 이를 복제했다. 13년 뒤인 2017년 800-63-3은 그 규칙들이 사람을 예측 가능한 쪽으로 몰았다는 근거로 구성 규칙을 철회하고 주기 변경을 금지했고, 2025년 800-63-4는 유출 목록 대조와 길이 중심으로 굳혔다. 방식은 그대로, 사람의 행동을 어떻게 다룰지만 바뀐 것이다.</p>
 
 <p><b>소유 레인은 "비밀을 기기에 옮기는" 레인이다.</b> 1980년대 중반 SecurID가 60초마다 바뀌는 숫자를 키링에 넣었고, 이 아이디어가 2005년 HOTP, 2011년 TOTP로 표준화되어 스마트폰 인증 앱이 됐다. 다른 갈래는 공개키다. 1988년 X.509 인증서가 "이 공개키는 이 사람 것"을 CA가 보증하는 틀을 만들었고, 한국은 1999년 전자서명법으로 이를 공인인증서라는 국가 제도로 올려 2010년대 내내 사실상 모든 금융·공공 로그인에 썼다. 하지만 두 갈래 모두 약점이 같았다. OTP는 사람이 코드를 옮겨 적기 때문에 가짜 사이트에도 옮겨 적고, 공인인증서는 개인키가 패스워드로 잠긴 파일이라 복사해 가면 오프라인에서 그 패스워드를 추측할 수 있었다. 2014년 FIDO U2F가 "서명은 브라우저가 도메인을 보고 하고, 개인키는 칩 밖으로 안 나간다"는 두 조건을 동시에 넣었고, 2019년 WebAuthn이 W3C 표준이 되면서 이 레인의 끝에 패스키(2022)가 놓였다. 같은 해 한국은 공인인증서의 법적 독점 지위를 폐지했다.</p>
 
 <p><b>생체 레인은 짧고, 대부분 다른 레인에 기생한다.</b> 지문·얼굴 자체는 오래된 기술이지만 대중 로그인에 들어온 건 2013년 Touch ID 이후다. 그런데 Touch ID와 Face ID가 하는 일은 서버에 생체를 보내는 게 아니라 <i>기기 안의 키를 꺼내도 되는지</i> 확인하는 것이다. 즉 생체는 소유 레인(패스키·인증서·앱 안의 OTP seed)의 잠금 해제 장치로 쓰이고, 단독 인증 요소로는 NIST가 허용하지 않는다(800-63B-4 §3.2.3). "지문으로 로그인한다"는 말은 거의 항상 "지문으로 기기 키를 풀어서 그 키로 로그인한다"는 뜻이다.</p>
 
-<p><b>연합 레인은 인증 방식이 아니라 인증 결과를 나르는 레인이다.</b> 1978년 Needham–Schroeder가 "신뢰받는 제3자가 세션키를 나눠 준다"는 틀을 제안했고, MIT Project Athena가 1988년 이를 Kerberos로 구현해 캠퍼스 전체의 워크스테이션·파일서버·메일을 한 번의 로그인으로 묶었다. 2000년 Windows 2000의 Active Directory가 Kerberos를 채택하면서 전 세계 사무실의 기본이 됐다. 인터넷 건너편 서비스까지 묶으려면 대칭키 사전 공유 대신 서명이 필요했고, 그래서 2005년 SAML 2.0, 2012년 OAuth 2.0, 2014년 OpenID Connect가 나왔다. 이 레인이 중요한 이유는 하나다. <b>연합은 1차 인증을 한 곳(IdP)으로 모은다.</b> 그 한 곳이 패스워드로 열리면, 연합은 패스워드 하나로 모든 서비스가 열린다는 뜻이 된다.</p>
+<p><b>연합 레인은 인증 방식이 아니라 인증 결과를 나르는 레인이다.</b> 1978년 Needham–Schroeder가 "신뢰받는 제3자가 세션키를 나눠 준다"는 틀을 제안했고, MIT Project Athena가 1986년부터 이를 Kerberos로 구현해 1988년 논문으로 발표하고(v4 공개는 1989년 1월) 캠퍼스 전체의 워크스테이션·파일서버·메일을 한 번의 로그인으로 묶었다. 2000년 Windows 2000의 Active Directory가 Kerberos를 채택하면서 전 세계 사무실의 기본이 됐다. 인터넷 건너편 서비스까지 묶으려면 대칭키 사전 공유 대신 서명이 필요했고, 그래서 2005년 SAML 2.0, 2012년 OAuth 2.0, 2014년 OpenID Connect가 나왔다. 이 레인이 중요한 이유는 하나다. <b>연합은 1차 인증을 한 곳(IdP)으로 모은다.</b> 그 한 곳이 패스워드로 열리면, 연합은 패스워드 하나로 모든 서비스가 열린다는 뜻이 된다.</p>
 
 <h2>왜 맵의 오른쪽 끝에서 아직 패스워드가 가장 두꺼운가</h2>
-<p>세 가지 분모로 보면 같은 그림이 나온다. 서비스 쪽: Tranco 상위 10만 사이트 중 패스키를 지원하는 곳은 11.3%이고(PAM 2026, 2025년 3월 측정), 지원하는 곳도 패스워드 입력란을 없앤 경우는 극소수다. 사용자 쪽: 10개국 1만 명 설문에서 최근 60일 로그인 방식 1위는 업무·SNS·스트리밍 모두 "패스워드만 수동 입력"(36/30/24%)이었다(FIDO Barometer 2024). 패스키는 인지 90%·활성화 75%인데 일상 사용은 49%에 그친다(FIDO 2026). 플랫폼 쪽: 세계 최대 기업 ID 플랫폼인 Entra ID에서 MFA를 켠 월간 활성 사용자는 2023년 기준 37%, 즉 63%는 패스워드 단독이다.</p>
+<p>세 가지 분모로 보면 같은 그림이 나온다. 서비스 쪽: Tranco 상위 10만 사이트 중 패스키를 지원하는 곳은 11.3%이고(PAM 2026, 2025년 3월 측정), 지원하는 곳도 대부분 패스워드 옆에 추가 수단으로 얹었을 뿐이다(같은 논문). 사용자 쪽: 10개국 1만 명 설문에서 최근 60일 로그인 방식 1위는 업무·SNS·스트리밍 모두 "패스워드만 수동 입력"(36/30/24%)이었다(FIDO Barometer 2024). 패스키는 인지 90%·활성화 75%인데 "가능할 때마다 또는 대부분" 쓴다는 응답은 49%에 그친다(FIDO 2026, 전체 소비자 기준). 플랫폼 쪽: Entra ID 사용자의 MFA 사용률은 2023년 기준 37%를 갓 넘긴 수준, 즉 63%는 패스워드 단독이다.</p>
 <p>이유도 맵에 있다. 새 레인은 매번 <i>추가</i>됐지 패스워드를 <i>제거</i>하지 않았다. OTP는 패스워드 위에 얹혔고, 패스키는 패스워드 옆에 놓였고, 연합은 패스워드를 IdP 한 곳에 모았다. 패스워드를 실제로 없애려면 등록·복구 절차까지 바꿔야 하는데(7장), 그 비용을 치른 서비스가 아직 적다.</p>
 
 <h2>내 연구와의 접점</h2>
@@ -131,10 +131,10 @@
   <li>Morris &amp; Thompson, <a href="https://www.profsandhu.com/cs6393_s20/p594-morris.pdf">"Password Security: A Case History"</a>, CACM 22(11), 1979-11</li>
   <li>SecurID — 해시 설계 1985 (RSA Labs Brainard, Bugtraq 2001); 제품 출시 연도는 1차 출처 미확인 → 범위 표기</li>
   <li>X.509 초판 — ITU-T(CCITT) 1988 Blue Book. <span class="est">추정</span>: 이번 세션에서 원문 미확인</li>
-  <li>전자서명법 제정 1999 / 전부개정 시행 2020-12-10 (공인인증서·공인인증기관 제도 폐지) — <a href="https://www.itwiki.kr/w/%EA%B3%B5%EC%9D%B8%EC%9D%B8%EC%A6%9D%EC%84%9C">IT위키</a>, 보도 다수. 2014년 금융권 의무사용 폐지 포함</li>
+  <li>전자서명법 제정 1999 / 전부개정 시행 2020-12-10 (공인인증서·공인인증기관 제도 폐지) — <a href="https://www.itwiki.kr/w/%EA%B3%B5%EC%9D%B8%EC%9D%B8%EC%A6%9D%EC%84%9C">IT위키</a>, 보도 다수. 2014-05 온라인 카드결제 의무사용 폐지(전자금융감독규정 시행세칙), 2015-03 전자금융거래 전반 의무사용 폐지 포함</li>
   <li><a href="https://www.rfc-editor.org/rfc/rfc4226">RFC 4226</a> HOTP 2005-12 · <a href="https://www.rfc-editor.org/rfc/rfc6238">RFC 6238</a> TOTP 2011-05</li>
   <li>FIDO 1.0 (UAF·U2F) 최종 2014-12-09 — <a href="https://www.eweek.com/security/fido-alliance-finalizes-strong-authentication-security-specs/">eWeek</a>; <a href="https://www.w3.org/TR/2019/REC-webauthn-1-20190304/">WebAuthn Level 1</a> W3C Recommendation 2019-03-04; 패스키 공동 발표 2022-05-05 (Apple·Google·Microsoft)</li>
-  <li>Needham &amp; Schroeder, "Using Encryption for Authentication in Large Networks of Computers", CACM 1978 · Kerberos v4 1988 (Project Athena) · <a href="https://www.rfc-editor.org/rfc/rfc1510">RFC 1510</a> 1993-09 · Windows 2000 출시 2000-02</li>
+  <li>Needham &amp; Schroeder, "Using Encryption for Authentication in Large Networks of Computers", CACM 1978 · Steiner·Neuman·Schiller, "Kerberos: An Authentication Service for Open Network Systems" (USENIX 1988) · v4 공개 1989-01 · <a href="https://www.rfc-editor.org/rfc/rfc1510">RFC 1510</a> 1993-09 · Windows 2000 출시 2000-02</li>
   <li>SAML 2.0 OASIS 표준 2005-03 · <a href="https://www.rfc-editor.org/rfc/rfc6749">RFC 6749</a> OAuth 2.0 2012-10 · OpenID Connect Core 1.0 2014-02</li>
   <li>NIST SP 800-63 v1.0 2004-06 · 800-63-3 2017-06 · <a href="https://csrc.nist.gov/pubs/sp/800/63/4/final">800-63-4</a> 2025-07-31 (63B-4 §3.2.3 생체 단독 불허, §2.2 AAL2 피싱 내성 옵션 제공 SHALL)</li>
   <li>통계 — <a href="https://www.arxiv.org/pdf/2602.15135">Bhardwaj &amp; Sastry, PAM 2026</a> (11.3%) · <a href="https://fidoalliance.org/wp-content/uploads/2024/10/FIDO-Consumer-Barometer-2024-27.08.24.pdf">FIDO Barometer 2024</a> (36/30/24%) · <a href="https://fidoalliance.org/wp-content/uploads/2026/05/The-State-of-Passkeys-Global-Consumer-and-Workforce-Report-1.pdf">FIDO State of Passkeys 2026</a> (90/75/49%) · <a href="https://www.microsoft.com/en-us/security/blog/2023/11/06/automatic-conditional-access-policies-in-microsoft-entra-streamline-identity-protection/">Microsoft 2023-11</a> (MFA 37%)</li>

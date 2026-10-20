@@ -49,5 +49,6 @@ th { background:var(--panel); }
 td.ok { color:var(--c3); font-weight:700; } td.no { color:var(--warn); font-weight:700; } td.na { color:var(--muted); }
 .enc { font-family:Menlo,monospace; font-size:12px; }
 .refs { font-size:13.5px; } .refs li { margin:4px 0; }
+.prevnext { display:flex; justify-content:space-between; gap:16px; margin-top:40px; padding-top:16px; border-top:1px solid #e5e7eb; font-size:14px; }
 .est { color:var(--c2); font-size:12px; font-weight:700; }   /* "추정" 표시 */
 @media (min-width:760px){ .steps{ grid-template-columns:1fr 1fr; } }
