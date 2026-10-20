@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>위협 모델 어휘 — 사용자 인증 연구소</title>
+<link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+<header class="site">
+  <a class="brand" href="index.html">사용자 인증 연구소</a>
+  <span class="tag">패스워드 이후의 인증을 기초부터 — 공부 기록</span>
+</header>
+<div class="layout">
+<nav class="toc">
+  <ul>
+<li class="chap">0. 인증의 기초<ul>
+<li><a href="history.html">인증의 역사 — 한 장의 맵</a></li>
+<li><a href="basics.html">식별·인증·인가와 인증 요소</a></li>
+<li class="cur"><a href="threats.html">위협 모델 어휘</a></li>
+</ul></li>
+<li class="chap">1. 패스워드<ul>
+<li class="todo">서버 저장: 해시·솔트·KDF</li>
+<li class="todo">정책의 역사와 NIST SP 800-63B</li>
+<li class="todo">추측 모델 계보와 강도 추정</li>
+<li class="todo">패스워드 관리자</li>
+</ul></li>
+<li class="chap">2. OTP와 MFA<ul>
+<li class="todo">HOTP·TOTP와 공유 비밀</li>
+<li class="todo">푸시·SMS·MFA 피로, 그리고 MFA가 못 막는 것</li>
+</ul></li>
+<li class="chap">3. 공개키 기반 인증<ul>
+<li class="todo">챌린지-응답과 PKI·인증서</li>
+<li class="todo">공동인증서(구 공인인증서)</li>
+<li class="todo">클라이언트 인증서·스마트카드·SSH 키</li>
+</ul></li>
+<li class="chap">4. FIDO와 패스키<ul>
+<li><a href="fido2.html">U2F → FIDO2: WebAuthn + CTAP</a></li>
+<li><a href="passkeys.html">패스키: synced vs device-bound</a></li>
+<li><a href="passkeys-vs-npki.html">패스키 vs 공동인증서</a></li>
+</ul></li>
+<li class="chap">5. 연합 인증과 SSO<ul>
+<li class="todo">IdP와 SSO 개념</li>
+<li><a href="kerberos.html">Kerberos 인증 흐름</a></li>
+<li class="todo">SAML 2.0</li>
+<li class="todo">OAuth 2.0 vs OIDC</li>
+<li class="todo">토큰·세션·쿠키</li>
+<li class="todo">Entra ID·Okta와 AD</li>
+</ul></li>
+<li class="chap">6. 생체 인증<ul>
+<li class="todo">로컬 매칭 vs 서버 매칭, FAR·FRR</li>
+</ul></li>
+<li class="chap">7. 계정 등록·복구<ul>
+<li class="todo">가장 약한 고리</li>
+</ul></li>
+<li class="chap">8. 실전 공격 사례<ul>
+<li class="todo">Kerberoasting부터 세션 탈취까지</li>
+</ul></li>
+<li class="chap">9. 실습 랩<ul>
+<li class="todo">WebAuthn 등록·인증 데모</li>
+<li class="todo">TOTP 생성기</li>
+<li class="todo">방식별 "서버에 남는 것" 비교</li>
+</ul></li>
+  </ul>
+</nav>
+<main class="wrap">
+<h1>위협 모델 어휘</h1>
+<p class="sub">인증 방식을 비교하려면 "안전하다"가 아니라 "누가 무엇을 가지고 어디를 치면 뚫리나"로 말해야 한다. 이 사이트가 쓰는 공격 이름 13개</p>
+
+<div class="def"><b>위협 모델</b>은 공격자가 <b>가진 것</b>(능력: 네트워크 도청, 유출 DB, 가짜 사이트, 감염된 단말), <b>치는 곳</b>(표면: 등록·단말·네트워크·서버·세션·복구), <b>얻으려는 것</b>(목표: 비밀 자체, 1회 로그인, 영구 접근)의 조합이다. 어떤 인증 방식도 모든 조합을 막지 않는다. 각 방식 페이지의 "무엇을 지키고 무엇을 못 지키나" 표는 이 어휘로 쓴다.</div>
+
+<svg class="fig" viewBox="0 0 960 330" xmlns="http://www.w3.org/2000/svg" font-family="Apple SD Gothic Neo, Pretendard, Helvetica, Arial, sans-serif" font-size="12">
+  <defs>
+    <marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1a1f2b"/>
+    </marker>
+  </defs>
+  <!-- 6 surfaces -->
+  <g font-weight="700" text-anchor="middle">
+    <rect x="20" y="130" width="130" height="50" rx="9" fill="#fff" stroke="#c2410c" stroke-width="1.5"/><text x="85" y="160" fill="#c2410c">등록 · 복구</text>
+    <rect x="190" y="130" width="130" height="50" rx="9" fill="#fff" stroke="#1a1f2b" stroke-width="1.5"/><text x="255" y="160">사용자 · 단말</text>
+    <rect x="360" y="130" width="130" height="50" rx="9" fill="#fff" stroke="#1a1f2b" stroke-width="1.5"/><text x="425" y="153">네트워크</text><text x="425" y="170" font-weight="400" font-size="11" fill="#5c6474">가짜 사이트 포함</text>
+    <rect x="530" y="130" width="130" height="50" rx="9" fill="#fff" stroke="#1a1f2b" stroke-width="1.5"/><text x="595" y="160">서버 · DB</text>
+    <rect x="700" y="130" width="130" height="50" rx="9" fill="#fff" stroke="#7c3aed" stroke-width="1.5"/><text x="765" y="160" fill="#7c3aed">세션 · 토큰</text>
+  </g>
+  <g stroke="#1a1f2b" stroke-width="1.6">
+    <line x1="152" y1="155" x2="186" y2="155" marker-end="url(#ar3)"/><line x1="322" y1="155" x2="356" y2="155" marker-end="url(#ar3)"/>
+    <line x1="492" y1="155" x2="526" y2="155" marker-end="url(#ar3)"/><line x1="662" y1="155" x2="696" y2="155" marker-end="url(#ar3)"/>
+  </g>
+  <!-- threats above -->
+  <g fill="#b91c1c" font-size="11.5" text-anchor="middle">
+    <text x="85" y="60" font-weight="700">무단 바인딩</text><text x="85" y="76">사회공학 · 고객센터</text><text x="85" y="92">SIM 스와핑</text>
+    <text x="255" y="60" font-weight="700">단말 감염</text><text x="255" y="76">인포스틸러 · 키로거</text><text x="255" y="92">MFA 피로</text>
+    <text x="425" y="60" font-weight="700">피싱 · AiTM</text><text x="425" y="76">도청 (eavesdropping)</text><text x="425" y="92">재생 (replay)</text>
+    <text x="595" y="60" font-weight="700">온라인 추측</text><text x="595" y="76">크리덴셜 스터핑</text><text x="595" y="92">DB 유출 → 오프라인 추측</text>
+    <text x="765" y="60" font-weight="700">세션 탈취</text><text x="765" y="76">쿠키·토큰 절도</text><text x="765" y="92">토큰 위조</text>
+  </g>
+  <g stroke="#b91c1c" stroke-width="1.2" stroke-dasharray="4 3">
+    <line x1="85" y1="100" x2="85" y2="126"/><line x1="255" y1="100" x2="255" y2="126"/><line x1="425" y1="100" x2="425" y2="126"/><line x1="595" y1="100" x2="595" y2="126"/><line x1="765" y1="100" x2="765" y2="126"/>
+  </g>
+  <!-- what each surface holds -->
+  <g fill="#5c6474" font-size="11" text-anchor="middle">
+    <text x="85" y="205">신원 확인 · 인증기 연결</text><text x="85" y="220">"인증 없이 등록 다시"</text>
+    <text x="255" y="205">패스워드 입력 · 키 보관</text><text x="255" y="220">OTP 앱 · 브라우저</text>
+    <text x="425" y="205">TLS 위 · 사용자가 간</text><text x="425" y="220">도메인이 진짜인가</text>
+    <text x="595" y="205">해시 · 공개키 · seed</text><text x="595" y="220">시도 제한 · 유출 대조</text>
+    <text x="765" y="205">로그인 뒤 N시간</text><text x="765" y="220">쿠키 · TGT · JWT</text>
+  </g>
+  <text x="480" y="290" text-anchor="middle" fill="#1a1f2b" font-size="12.5">방식이 바뀌면 공격이 <tspan font-weight="700">사라지지 않고 옮겨 간다</tspan>: 패스워드 → 피싱·추측 / MFA → AiTM·MFA 피로 / 패스키 → 등록·복구·세션 / SSO → IdP 한 곳</text>
+  <text x="480" y="312" text-anchor="middle" fill="#5c6474" font-size="11">빨강 = 공격 이름. 각 방식 페이지의 위협 표는 이 다섯 표면 중 어디를 막고 어디를 못 막는지로 읽는다.</text>
+</svg>
+
+<h2>어휘 13개</h2>
+<p>이름 옆 괄호는 MITRE ATT&amp;CK 기법 번호. "구조적으로 막는 방식"은 그 공격이 <i>정의상</i> 성립하지 않게 되는 방식이고, 완화(시도 제한·탐지)와는 구분한다.</p>
+<table>
+  <tr><th>공격</th><th>공격자가 가진 것</th><th>치는 곳 · 노리는 것</th><th>구조적으로 막는 방식</th><th>그대로 당하는 방식</th></tr>
+  <tr><td><b>온라인 추측</b> online guessing (T1110.001) · <b>스프레이</b> password spraying (T1110.003)</td><td>아이디 목록, 흔한 패스워드 목록</td><td>서버 로그인 API · 비밀 자체</td><td>비밀이 추측 가능한 공간에 없음: 공개키 인증, 랜덤 키</td><td>패스워드, PIN. 완화: 시도 제한(63B-4 §3.2.2), 유출 목록 차단</td></tr>
+  <tr><td><b>크리덴셜 스터핑</b> credential stuffing (T1110.004)</td><td>다른 사이트에서 유출된 ID·패스워드 쌍</td><td>서버 · 재사용된 비밀</td><td>사이트마다 다른 비밀: 패스키(사이트별 키쌍), 관리자 생성 패스워드</td><td>사람이 고른 패스워드 (재사용률이 공격 성공률)</td></tr>
+  <tr><td><b>오프라인 추측</b> offline cracking (T1110.002)</td><td>유출된 서버 DB(해시·암호문)</td><td>서버 DB → 비밀 복원</td><td>서버에 비밀이 없음: 공개키만 저장(FIDO). 완화: 느린 해시(bcrypt·Argon2)</td><td>패스워드 해시, Kerberos 티켓(서비스 계정 패스워드로 암호화), 공유 OTP seed</td></tr>
+  <tr><td><b>피싱</b> phishing (T1566)</td><td>가짜 로그인 페이지, 사용자를 유인할 메시지</td><td>사용자 · 비밀을 "자발적으로" 입력</td><td>사람이 비밀을 입력하지 않음 + 도메인 바인딩: FIDO/패스키</td><td>패스워드, OTP 코드(사람이 옮겨 적음), 공동인증서(가짜 사이트에도 서명)</td></tr>
+  <tr><td><b>AiTM 피싱</b> adversary-in-the-middle (T1557)</td><td>실시간 프록시(Evilginx 류): 사용자↔진짜 사이트 사이에서 중계</td><td>네트워크 · MFA까지 통과한 <b>세션 쿠키</b></td><td>서명이 origin에 묶임: 프록시 도메인에서는 브라우저가 서명 거부 (WebAuthn RP ID)</td><td>패스워드+SMS/TOTP/푸시 — 코드와 승인이 그대로 중계됨</td></tr>
+  <tr><td><b>도청</b> eavesdropping</td><td>네트워크 경로 위 위치</td><td>네트워크 · 전송 중 비밀</td><td>TLS(모든 방식의 전제), 비밀 비전송(Kerberos·공개키)</td><td>평문 프로토콜. 실전에선 TLS 덕에 드묾</td></tr>
+  <tr><td><b>재생</b> replay</td><td>캡처한 인증 메시지</td><td>네트워크 · 같은 메시지 재사용</td><td>1회용 챌린지(FIDO), 시각 authenticator(Kerberos), 카운터(HOTP)</td><td>고정 비밀 그대로 보내는 방식(패스워드 — 하지만 TLS가 캡처를 막음)</td></tr>
+  <tr><td><b>세션 탈취</b> session hijacking · 쿠키 절도 (T1539) · pass-the-ticket (T1550.003)</td><td>감염 단말, AiTM 결과, 메모리 접근</td><td>세션 · 인증 <i>이후</i>의 토큰</td><td>없음 — 인증 방식과 무관. 완화: 토큰 바인딩(DBSC 등), 짧은 수명, 재인증</td><td>모든 방식. 패스키로 로그인해도 쿠키는 똑같이 훔쳐짐</td></tr>
+  <tr><td><b>토큰 위조</b> forgery · Golden Ticket (T1558.001)</td><td>서명 키·KDC 키 유출</td><td>서버의 신뢰 뿌리</td><td>없음. 키 보호(HSM)·순환이 전부</td><td>Kerberos(krbtgt), SAML/OIDC(IdP 개인키), JWT(서명 키)</td></tr>
+  <tr><td><b>MFA 피로</b> push bombing (T1621)</td><td>이미 얻은 패스워드 + 푸시 반복 전송</td><td>사용자 · "승인" 한 번</td><td>사용자가 승인할 것이 없음: 패스키, 번호 매칭(완화)</td><td>단순 푸시 승인</td></tr>
+  <tr><td><b>SIM 스와핑</b> SIM swap (T1451)</td><td>통신사 상담원 사회공학 또는 내부자</td><td>복구 · 전화번호 소유권</td><td>전화번호를 인증·복구 요소로 안 씀</td><td>SMS OTP, 전화번호 기반 복구</td></tr>
+  <tr><td><b>단말 감염</b> endpoint compromise · 인포스틸러</td><td>사용자 기기 위 악성코드</td><td>단말 · 입력되는 비밀, 저장된 쿠키·키</td><td>키가 기기 OS 밖(보안 칩·보안키)에 있으면 <i>추출</i>은 막음. 사용은 못 막음</td><td>브라우저 저장 패스워드·쿠키(스틸러 로그의 주 재료), 파일형 개인키(공동인증서)</td></tr>
+  <tr><td><b>무단 바인딩</b> unauthorized binding · 복구 남용 · 사회공학</td><td>피해자 정보(이메일 접근, 개인정보), 상담원 설득</td><td>등록·복구 · 내 인증기를 남의 계정에 묶기</td><td>없음 — 등록·복구 절차의 신원 확인 강도가 전부 (63A)</td><td>모든 방식. 패스키 보안이 "서버의 등록·복구 절차 보안"으로 환원되는 지점</td></tr>
+</table>
+
+<h2>온라인 추측과 오프라인 추측은 10억 배 다르다</h2>
+<p>둘 다 "추측"이지만 공격자가 서 있는 자리가 다르다. <b>온라인</b>은 서버의 로그인 API에 한 번씩 물어보는 것이라 서버가 세고 막을 수 있다. NIST 63B-4는 한 계정에 연속 실패 100회를 넘기지 못하게 제한하라고 하고(§3.2.2 throttling), 실제 서비스는 캡차·지연·잠금을 쓴다. 그래서 온라인 추측에서 의미 있는 건 "상위 100개 패스워드에 들어가는가"다. <b>오프라인</b>은 유출된 해시를 공격자 자기 GPU로 돌리는 것이라 제한이 없다. hashcat 공개 벤치마크 기준 RTX 4090 한 장이 MD5는 초당 약 10<sup>11</sup>회, bcrypt(cost 5)는 약 10<sup>5</sup>회 수준이다(<span class="est">추정</span>: 벤치마크 수치는 버전·설정에 따라 다름). 즉 해시 함수 선택이 10<sup>6</sup>배를 가르고, 그 위에서 "사람이 고른 패스워드의 예측 가능성"이 나머지를 가른다.</p>
+<p>이 구분이 방식 비교의 기준이 된다. 패스워드는 둘 다 당한다. Kerberos는 온라인은 막지만(서버가 세지 않음 — 티켓만 요청하면 됨) 오프라인은 당한다(Kerberoasting). TOTP는 seed가 유출되면 추측할 것도 없이 끝이다. FIDO는 서버에 공개키만 있어 둘 다 성립하지 않는다.</p>
+
+<h2>흔한 오해</h2>
+<div class="box"><b>"피싱과 AiTM은 같은 것."</b> 피싱은 비밀을 받아 <i>나중에</i> 쓰고, AiTM은 세션을 <i>실시간으로</i> 가로챈다. 그래서 1회용 코드(TOTP)는 피싱엔 어느 정도 버티지만 AiTM엔 그대로 뚫린다. MFA 도입 후 공격이 AiTM으로 이동한 이유.</div>
+<div class="box"><b>"피싱 내성 = 사용자가 속지 않음."</b> 아니다. 사용자가 완전히 속아 가짜 사이트에서 로그인을 시도해도 <i>브라우저와 인증기가</i> 도메인 불일치로 서명을 안 만드는 것이 피싱 내성이다. 사람의 판단을 빼는 것.</div>
+<div class="box"><b>"패스키면 계정 탈취는 끝."</b> 패스키가 막는 건 추측·스터핑·피싱·AiTM, 즉 <i>인증 단계</i>의 공격이다. 세션 탈취·단말 감염·복구 남용은 표면이 달라 그대로 남는다. 2024년 이후 ID 공격이 토큰 탈취로 이동한 배경.</div>
+
+<h2>내 연구와의 접점</h2>
+<div class="box">내 논문 두 편은 이 표의 세 줄만 다룬다 — <b>온라인 추측·오프라인 추측·크리덴셜 스터핑(재사용·전이)</b>. 공통점은 전부 "사람이 고른 비밀의 예측 가능성"에서 나오는 공격이라는 것. PSI가 높은 서비스라도 피싱·세션 탈취·복구 남용에는 아무 말도 못 하며, 반대로 패스키가 이 세 줄을 구조적으로 없애더라도 나머지 열 줄이 남는다. "패스워드 이후"를 공부하는 이유가 이 표의 나머지 열 줄이다.</div>
+
+<h2>참고 표준·문헌 (확인한 것)</h2>
+<ul class="refs">
+  <li><a href="https://pages.nist.gov/800-63-4/sp800-63b.html">NIST SP 800-63B-4</a> §8 Threats and Security Considerations — 인증기 위협 표(assertion manufacture/theft/duplication, eavesdropping, offline cracking, side channel, phishing, online guessing, endpoint compromise, unauthorized binding). 본 페이지 표는 이 목록에 세션·연합 쪽(세션 탈취·토큰 위조·MFA 피로·SIM 스와핑)을 더한 것. §3.2.2 throttling(연속 실패 100회) — 조항 번호는 63B-3 §5.2.2 기준이며 63B-4 번호는 <span class="est">추정</span></li>
+  <li><a href="https://attack.mitre.org/tactics/TA0006/">MITRE ATT&amp;CK Credential Access</a> — T1110 Brute Force(.001 guessing, .002 cracking, .003 spraying, .004 stuffing), T1557 AiTM, T1539 Steal Web Session Cookie, T1550.003 Pass the Ticket, T1558 Steal or Forge Kerberos Tickets, T1621 MFA Request Generation, T1566 Phishing, T1451 SIM Card Swap(모바일 매트릭스)</li>
+  <li><a href="https://hashcat.net/forum/thread-11277.html">hashcat RTX 4090 벤치마크</a> (공개 포럼 스레드, <span class="est">추정</span>: 수치는 대략값)</li>
+  <li>WebAuthn Level 3 §4 Relying Party Identifier — "The RP ID must be equal to the origin's effective domain, or a registrable domain suffix of the origin's effective domain" (피싱 내성의 근거. 4장에서 상세)</li>
+</ul>
+
+</main>
+</div>
+<footer class="site">전동호 (David Jeon) · 1차 출처(RFC·W3C/FIDO·NIST SP) 대조 후 확정한 내용만 "확정", 아니면 "추정"으로 표시</footer>
+</body>
+</html>

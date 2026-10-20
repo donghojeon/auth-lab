@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>U2F → FIDO2: WebAuthn + CTAP — 사용자 인증 연구소</title>
+<link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+<header class="site">
+  <a class="brand" href="index.html">사용자 인증 연구소</a>
+  <span class="tag">패스워드 이후의 인증을 기초부터 — 공부 기록</span>
+</header>
+<div class="layout">
+<nav class="toc">
+  <ul>
+<li class="chap">0. 인증의 기초<ul>
+<li><a href="history.html">인증의 역사 — 한 장의 맵</a></li>
+<li><a href="basics.html">식별·인증·인가와 인증 요소</a></li>
+<li><a href="threats.html">위협 모델 어휘</a></li>
+</ul></li>
+<li class="chap">1. 패스워드<ul>
+<li class="todo">서버 저장: 해시·솔트·KDF</li>
+<li class="todo">정책의 역사와 NIST SP 800-63B</li>
+<li class="todo">추측 모델 계보와 강도 추정</li>
+<li class="todo">패스워드 관리자</li>
+</ul></li>
+<li class="chap">2. OTP와 MFA<ul>
+<li class="todo">HOTP·TOTP와 공유 비밀</li>
+<li class="todo">푸시·SMS·MFA 피로, 그리고 MFA가 못 막는 것</li>
+</ul></li>
+<li class="chap">3. 공개키 기반 인증<ul>
+<li class="todo">챌린지-응답과 PKI·인증서</li>
+<li class="todo">공동인증서(구 공인인증서)</li>
+<li class="todo">클라이언트 인증서·스마트카드·SSH 키</li>
+</ul></li>
+<li class="chap">4. FIDO와 패스키<ul>
+<li class="cur"><a href="fido2.html">U2F → FIDO2: WebAuthn + CTAP</a></li>
+<li><a href="passkeys.html">패스키: synced vs device-bound</a></li>
+<li><a href="passkeys-vs-npki.html">패스키 vs 공동인증서</a></li>
+</ul></li>
+<li class="chap">5. 연합 인증과 SSO<ul>
+<li class="todo">IdP와 SSO 개념</li>
+<li><a href="kerberos.html">Kerberos 인증 흐름</a></li>
+<li class="todo">SAML 2.0</li>
+<li class="todo">OAuth 2.0 vs OIDC</li>
+<li class="todo">토큰·세션·쿠키</li>
+<li class="todo">Entra ID·Okta와 AD</li>
+</ul></li>
+<li class="chap">6. 생체 인증<ul>
+<li class="todo">로컬 매칭 vs 서버 매칭, FAR·FRR</li>
+</ul></li>
+<li class="chap">7. 계정 등록·복구<ul>
+<li class="todo">가장 약한 고리</li>
+</ul></li>
+<li class="chap">8. 실전 공격 사례<ul>
+<li class="todo">Kerberoasting부터 세션 탈취까지</li>
+</ul></li>
+<li class="chap">9. 실습 랩<ul>
+<li class="todo">WebAuthn 등록·인증 데모</li>
+<li class="todo">TOTP 생성기</li>
+<li class="todo">방식별 "서버에 남는 것" 비교</li>
+</ul></li>
+  </ul>
+</nav>
+<main class="wrap">
+<h1>U2F → FIDO2: WebAuthn + CTAP</h1>
+<p class="sub">서버는 공개키만 갖고, 기기는 개인키를 안 내보내고, 브라우저는 도메인을 본다 — 피싱 내성의 실체는 이 세 조건의 조합</p>
+
+<div class="def"><b>FIDO2</b>는 <b>WebAuthn</b>(W3C 표준: 웹사이트 ↔ 브라우저 API)과 <b>CTAP</b>(FIDO Alliance 표준: 브라우저/OS ↔ 인증기 프로토콜)의 묶음이다. 사이트마다 다른 공개키 쌍을 만들어 등록하고, 로그인 때마다 서버가 준 1회용 챌린지에 개인키로 서명한다. 서명 안에 <b>origin</b>이 들어가고 브라우저가 <b>RP ID</b>를 검사하므로 가짜 도메인에서는 서명이 만들어지지 않는다.</div>
+
+<div class="legend">
+  <span class="k1">RP 서버 — 공개키·credential ID·카운터만 보관</span>
+  <span class="k2">브라우저/OS (클라이언트) — origin·RP ID 검사, clientData 생성</span>
+  <span class="k3">인증기 — 개인키 생성·보관·서명. 보안키 또는 폰/PC의 보안 칩</span>
+  <span class="k4">UV — 사용자 확인 (PIN·생체). 인증기 안에서만 일어남</span>
+</div>
+
+<svg class="fig" viewBox="0 0 960 660" xmlns="http://www.w3.org/2000/svg" font-family="Apple SD Gothic Neo, Pretendard, Helvetica, Arial, sans-serif" font-size="12.5">
+  <defs>
+    <marker id="ar4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1a1f2b"/>
+    </marker>
+  </defs>
+  <g font-weight="700" font-size="14" text-anchor="middle">
+    <rect x="50" y="16" width="170" height="50" rx="10" fill="#fff" stroke="#15803d" stroke-width="1.5"/>
+    <text x="135" y="37" fill="#15803d">인증기</text><text x="135" y="55" font-weight="400" font-size="11.5" fill="#5c6474">보안키 · 폰 · 보안 칩</text>
+    <rect x="330" y="16" width="190" height="50" rx="10" fill="#fff" stroke="#c2410c" stroke-width="1.5"/>
+    <text x="425" y="37" fill="#c2410c">브라우저 (클라이언트)</text><text x="425" y="55" font-weight="400" font-size="11.5" fill="#5c6474">origin = https://example.com</text>
+    <rect x="690" y="16" width="190" height="50" rx="10" fill="#fff" stroke="#0a4fd6" stroke-width="1.5"/>
+    <text x="785" y="37" fill="#0a4fd6">RP 서버</text><text x="785" y="55" font-weight="400" font-size="11.5" fill="#5c6474">rpId = example.com</text>
+  </g>
+  <g stroke="#b8bfca" stroke-dasharray="4 4">
+    <line x1="135" y1="66" x2="135" y2="640"/><line x1="425" y1="66" x2="425" y2="640"/><line x1="785" y1="66" x2="785" y2="640"/>
+  </g>
+  <g font-size="11" font-weight="700" fill="#5c6474">
+    <text x="8" y="100">등록</text><text x="8" y="114">(create)</text>
+    <text x="8" y="400">인증</text><text x="8" y="414">(get)</text>
+  </g>
+  <line x1="40" y1="372" x2="920" y2="372" stroke="#d9dde4"/>
+
+  <!-- 등록 -->
+  <line x1="780" y1="100" x2="430" y2="100" stroke="#1a1f2b" stroke-width="1.6" marker-end="url(#ar4)"/>
+  <text x="605" y="93" text-anchor="middle" font-weight="700">1. 등록 옵션</text>
+  <rect x="470" y="106" width="270" height="26" rx="6" fill="#fff" stroke="#0a4fd6"/>
+  <text x="605" y="123" text-anchor="middle" fill="#0a4fd6">challenge(랜덤) + rp.id + user.id</text>
+
+  <line x1="420" y1="160" x2="140" y2="160" stroke="#1a1f2b" stroke-width="1.6" marker-end="url(#ar4)"/>
+  <text x="280" y="153" text-anchor="middle" font-weight="700">2. makeCredential (CTAP)</text>
+  <rect x="150" y="166" width="260" height="40" rx="6" fill="#fff" stroke="#c2410c"/>
+  <text x="280" y="182" text-anchor="middle" fill="#c2410c">rpIdHash + H(clientData)</text>
+  <text x="280" y="198" text-anchor="middle" fill="#c2410c" font-size="11">clientData = {type, challenge, <tspan font-weight="700">origin</tspan>}</text>
+
+  <rect x="55" y="220" width="160" height="40" rx="6" fill="#f0fdf4" stroke="#15803d"/>
+  <text x="135" y="236" text-anchor="middle" fill="#15803d" font-weight="700">UV → 새 키쌍 생성</text>
+  <text x="135" y="252" text-anchor="middle" fill="#15803d" font-size="11">rpId별 · 개인키는 안 나감</text>
+
+  <line x1="140" y1="285" x2="420" y2="285" stroke="#1a1f2b" stroke-width="1.6" marker-end="url(#ar4)"/>
+  <text x="280" y="278" text-anchor="middle" font-weight="700">3. 응답</text>
+  <rect x="150" y="291" width="260" height="26" rx="6" fill="#fff" stroke="#15803d"/>
+  <text x="280" y="308" text-anchor="middle" fill="#15803d">credId + 공개키 + flags + attestation</text>
+
+  <line x1="430" y1="340" x2="780" y2="340" stroke="#1a1f2b" stroke-width="1.6" marker-end="url(#ar4)"/>
+  <text x="605" y="333" text-anchor="middle" font-weight="700">4. 등록 완료 요청</text>
+  <rect x="470" y="346" width="270" height="26" rx="6" fill="#fff" stroke="#c2410c"/>
+  <text x="605" y="363" text-anchor="middle" fill="#c2410c">clientDataJSON + attestationObject</text>
+  <rect x="800" y="296" width="150" height="62" rx="6" fill="#eef4ff" stroke="#0a4fd6"/>
+  <text x="875" y="312" text-anchor="middle" fill="#0a4fd6" font-weight="700">서버 검증·저장</text>
+  <text x="875" y="327" text-anchor="middle" fill="#0a4fd6" font-size="11">origin·challenge·rpIdHash</text>
+  <text x="875" y="341" text-anchor="middle" fill="#0a4fd6" font-size="11">저장: credId, 공개키,</text>
+  <text x="875" y="354" text-anchor="middle" fill="#0a4fd6" font-size="11">counter, BE/BS</text>
+
+  <!-- 인증 -->
+  <line x1="780" y1="400" x2="430" y2="400" stroke="#1a1f2b" stroke-width="1.6" marker-end="url(#ar4)"/>
+  <text x="605" y="393" text-anchor="middle" font-weight="700">5. 인증 옵션</text>
+  <rect x="470" y="406" width="270" height="26" rx="6" fill="#fff" stroke="#0a4fd6"/>
+  <text x="605" y="423" text-anchor="middle" fill="#0a4fd6">새 challenge + rpId (+ allowCredentials)</text>
+
+  <line x1="420" y1="460" x2="140" y2="460" stroke="#1a1f2b" stroke-width="1.6" marker-end="url(#ar4)"/>
+  <text x="280" y="453" text-anchor="middle" font-weight="700">6. getAssertion (CTAP)</text>
+  <rect x="150" y="466" width="260" height="26" rx="6" fill="#fff" stroke="#c2410c"/>
+  <text x="280" y="483" text-anchor="middle" fill="#c2410c">rpIdHash + H(clientData{challenge, origin})</text>
+
+  <rect x="55" y="505" width="160" height="54" rx="6" fill="#f0fdf4" stroke="#15803d"/>
+  <text x="135" y="521" text-anchor="middle" fill="#15803d" font-weight="700">rpId 일치 확인 → UV</text>
+  <text x="135" y="536" text-anchor="middle" fill="#15803d" font-size="11">서명 = Sign<tspan font-size="9">개인키</tspan>(</text>
+  <text x="135" y="550" text-anchor="middle" fill="#15803d" font-size="11">authData ‖ H(clientData))</text>
+
+  <line x1="140" y1="585" x2="420" y2="585" stroke="#1a1f2b" stroke-width="1.6" marker-end="url(#ar4)"/>
+  <text x="280" y="578" text-anchor="middle" font-weight="700">7. 응답</text>
+  <rect x="150" y="591" width="260" height="26" rx="6" fill="#fff" stroke="#15803d"/>
+  <text x="280" y="608" text-anchor="middle" fill="#15803d">credId + authData + signature</text>
+
+  <line x1="430" y1="630" x2="780" y2="630" stroke="#1a1f2b" stroke-width="1.6" marker-end="url(#ar4)"/>
+  <text x="605" y="623" text-anchor="middle" font-weight="700">8. 로그인 요청</text>
+  <rect x="470" y="636" width="270" height="22" rx="6" fill="#fff" stroke="#c2410c"/>
+  <text x="605" y="651" text-anchor="middle" fill="#c2410c" font-size="11.5">clientDataJSON + authData + signature</text>
+  <rect x="800" y="560" width="150" height="76" rx="6" fill="#eef4ff" stroke="#0a4fd6"/>
+  <text x="875" y="576" text-anchor="middle" fill="#0a4fd6" font-weight="700">서버 검증</text>
+  <text x="875" y="591" text-anchor="middle" fill="#0a4fd6" font-size="11">origin = 내 origin?</text>
+  <text x="875" y="605" text-anchor="middle" fill="#0a4fd6" font-size="11">challenge = 내가 준 것?</text>
+  <text x="875" y="619" text-anchor="middle" fill="#0a4fd6" font-size="11">rpIdHash · UP/UV flags</text>
+  <text x="875" y="633" text-anchor="middle" fill="#0a4fd6" font-size="11">서명 ← 저장된 공개키</text>
+</svg>
+<p class="cap">authData = rpIdHash ‖ flags(UP·UV·BE·BS) ‖ signCount ‖ (등록 시 credId·공개키). 사용자는 2·6 단계에서 인증기를 터치하거나 PIN·생체를 넣는다 — 그 결과는 flags 비트로만 서버에 간다.</p>
+
+<h2>왜 피싱이 안 되나 — 조건 세 개가 동시에</h2>
+<div class="box"><b>① 브라우저가 RP ID를 origin과 대조한다.</b> WebAuthn L3 §4: "The RP ID must be equal to the origin's effective domain, or a registrable domain suffix of the origin's effective domain." 사용자가 <code>https://examp1e.com</code>(가짜)에 있으면 그 페이지는 <code>rpId: "example.com"</code>를 요청할 수 없다 — 브라우저가 §5.1.4 단계에서 <code>SecurityError</code>를 던진다. 가짜 사이트가 자기 도메인으로 요청하면 인증기에는 그 rpId로 만든 키가 없어서 서명할 것이 없다(§6.1: 인증기는 "the RP ID that the requested credential is scoped to exactly matches the RP ID supplied by the client"를 확인).</div>
+<div class="box"><b>② 서명 안에 origin이 들어간다.</b> 인증기가 서명하는 것은 <code>authenticatorData ‖ SHA-256(clientDataJSON)</code>이고(§6.3.3), clientDataJSON에는 <code>origin</code>과 <code>challenge</code>가 있다(§5.8.1). 그래서 어떤 경로로 서명을 얻더라도 서버가 origin을 대조하면 다른 도메인에서 만든 서명은 걸린다. AiTM 프록시가 중계해도 프록시의 origin이 박힌다.</div>
+<div class="box"><b>③ 개인키가 기기 밖으로 안 나가고, 사용자는 비밀을 입력하지 않는다.</b> 사용자가 입력하는 PIN·생체는 인증기 안에서 UV에만 쓰이고 네트워크로 가지 않는다(§4 User Verification: "locally authorizes the invocation"). 옮겨 적을 코드가 없으니 피싱 페이지가 받아 갈 것도 없다.</div>
+<p>세 조건 중 하나만 있으면 안 된다. 공동인증서는 ③의 절반(개인키가 파일)과 ①②가 없어서 가짜 사이트에도 서명해 주고, TOTP는 ①②가 없어서 코드가 중계된다. 3장·2장에서 각각 다룬다.</p>
+
+<h2>U2F에서 FIDO2로 — 무엇이 바뀌었나</h2>
+<p>2014년 U2F는 <b>2단계 전용</b>이었다. 사용자가 아이디·패스워드를 넣은 뒤 보안키를 터치하면(UP만, UV 없음) 서버가 보관한 key handle로 키를 찾아 서명을 받았다. 키는 보안키가 발견(discover)할 수 없었고 — 서버가 credential ID를 먼저 줘야 했고 — 패스워드가 여전히 1차였다. 2019년 WebAuthn L1 + CTAP2가 두 가지를 더했다. <b>discoverable credential</b>(§4: "usable in authentication ceremonies where the Relying Party does not provide any credential IDs… navigator.credentials.get() with an empty allowCredentials") — 인증기가 rpId만 보고 자기 안의 키를 찾으므로 아이디 입력조차 필요 없다. 그리고 <b>user verification</b> — PIN·생체로 인증기 안에서 본인 확인을 하므로 "소유 + 지식/생체" 두 요소가 인증기 하나에 들어간다. 이 둘이 합쳐진 것이 패스워드 없는 1차 로그인이고, 2022년 그 자격증명에 붙은 이름이 패스키다.</p>
+<table>
+  <tr><th></th><th>U2F (2014)</th><th>FIDO2 = WebAuthn + CTAP2 (2019)</th></tr>
+  <tr><td>역할</td><td>패스워드 뒤 2단계</td><td>1차 로그인 (패스워드 대체) 또는 2단계</td></tr>
+  <tr><td>키 찾기</td><td>서버가 key handle 제공 (non-discoverable)</td><td>인증기가 rpId로 발견 (discoverable) — resident key</td></tr>
+  <tr><td>사용자 동작</td><td>터치 = UP만</td><td>UP + UV(PIN·생체) 선택 가능</td></tr>
+  <tr><td>인증기</td><td>USB 보안키</td><td>보안키 + 플랫폼 인증기(폰·PC 보안 칩) + hybrid(QR·BLE로 폰 연결)</td></tr>
+  <tr><td>표준 주체</td><td>FIDO Alliance</td><td>W3C(WebAuthn) + FIDO(CTAP)</td></tr>
+</table>
+
+<h2>서버에 남는 것 — 유출 시나리오</h2>
+<p>RP 서버 DB에는 사용자별로 <code>credentialId</code>, <code>공개키</code>, <code>signCount</code>, 플래그(BE/BS), 선택적으로 attestation 정보가 남는다. 전부 유출돼도 공격자가 할 수 있는 건 없다 — 공개키로는 서명을 못 만든다. 패스워드 DB 유출이 곧 오프라인 크래킹인 것과 비교하면 이것이 FIDO의 두 번째 큰 효과다(첫 번째는 피싱 내성). 단, 유출된 credentialId·공개키로 "이 사람이 이 사이트 회원"임은 드러나고, 서버가 attestation을 저장했다면 인증기 모델도 드러난다.</p>
+
+<h2>Attestation — 선택 사항이고, 대부분 안 쓴다</h2>
+<p>등록 때 인증기는 "나는 제조사 X의 모델 Y이며 이 키는 내 안에서 만들어졌다"는 <b>attestation</b>을 제조사 인증서로 서명해 붙일 수 있다(§4: "verifiable evidence as to the origin of an authenticator"). RP는 <code>attestation: "none" | "indirect" | "direct" | "enterprise"</code>로 요청하고 기본값은 <code>none</code>(§5.4.7). 소비자 서비스는 거의 none — 어떤 기기든 받는다. 기업·정부는 direct로 "승인된 하드웨어 키만" 강제한다. Attestation이 없으면 서버는 그 키가 보안 칩 안에 있는지 소프트웨어 에뮬레이션인지 구분할 수 없다는 뜻이고, 그래서 "FIDO2 = 하드웨어 보안"은 attestation을 요구할 때만 맞는 말이다.</p>
+
+<h2>무엇을 지키고 무엇을 못 지키나</h2>
+<table>
+  <tr><th>위협</th><th>막나</th><th>왜</th></tr>
+  <tr><td>피싱 · AiTM</td><td class="ok">막음</td><td>RP ID 대조 + origin이 서명 안에. 사용자가 속아도 서명이 안 만들어짐</td></tr>
+  <tr><td>온라인 추측 · 스프레이 · 스터핑</td><td class="ok">막음</td><td>추측할 비밀이 없음. 사이트마다 다른 키쌍이라 재사용도 없음</td></tr>
+  <tr><td>서버 DB 유출 → 오프라인 추측</td><td class="ok">막음</td><td>서버엔 공개키뿐</td></tr>
+  <tr><td>재생</td><td class="ok">막음</td><td>서버가 매번 새 challenge. 서명이 challenge에 묶임</td></tr>
+  <tr><td>MFA 피로</td><td class="ok">막음</td><td>원격에서 띄울 "승인" 프롬프트가 없음. UV는 로컬 동작</td></tr>
+  <tr><td>세션 탈취 (쿠키·토큰)</td><td class="no">못 막음</td><td>인증 이후 단계. 패스키 로그인도 쿠키는 같음</td></tr>
+  <tr><td>단말 감염 — 키 <i>사용</i></td><td class="no">못 막음</td><td>악성코드가 사용자 UV 순간에 편승하거나 세션을 가져감. 키 <i>추출</i>은 보안 칩이면 막음</td></tr>
+  <tr><td>무단 바인딩 · 복구 남용</td><td class="no">못 막음</td><td>공격자가 자기 키를 피해자 계정에 등록하면 이후 전부 정상. 등록·복구 절차의 문제</td></tr>
+  <tr><td>소프트웨어 인증기 위장</td><td class="na">attestation 요구 시만</td><td>기본값 none이면 서버는 구분 못 함</td></tr>
+</table>
+
+<h2>흔한 오해</h2>
+<div class="box"><b>"지문이 서버로 간다."</b> 안 간다. 생체는 인증기 안의 UV에만 쓰이고, 서버는 "UV 비트 = 1"만 본다. 생체 템플릿은 기기 밖으로 나갈 이유가 없다.</div>
+<div class="box"><b>"FIDO2 = 패스키."</b> 패스키는 FIDO2 자격증명 중 discoverable한 것에 붙은 이름이다. U2F식 2단계 보안키도 FIDO2(CTAP2)로 동작하지만 패스키라 부르지 않는다. 4장 둘째 페이지.</div>
+<div class="box"><b>"보안키를 사야 FIDO."</b> 폰·노트북의 보안 칩(Secure Enclave, TPM)이 플랫폼 인증기로 동작한다. 보안키는 "기기에 묶인(device-bound)" 쪽의 선택지일 뿐.</div>
+<div class="box"><b>"피싱 내성이 있으니 MFA다."</b> 반대다. 피싱 내성과 요소 수는 별개(0장). UV 없는 보안키 터치는 1요소이면서 피싱 내성이고, 패스워드+TOTP는 2요소이면서 피싱 취약이다.</div>
+
+<h2>내 연구와의 접점</h2>
+<div class="box">FIDO2가 없애는 것은 정확히 내 논문의 대상 — <b>"사람이 고른 비밀"</b>이다. 키는 난수, 사이트마다 다르고, 서버엔 공개키만. 전이 예측(PPB)도 서비스별 예측 가능성(PSI)도 정의상 사라진다. 남는 질문은 두 가지. 첫째, 이 자격증명을 <i>등록·복구</i>하는 절차에 패스워드가 남아 있는가(거의 항상 남아 있다). 둘째, 어떤 서비스가 실제로 도입했는가(Top-100K의 11.3%). 내 논문이 재는 층은 그 89%와, 11%의 복구 경로다.</div>
+
+<h2>참고 표준·문헌 (확인한 것)</h2>
+<ul class="refs">
+  <li><a href="https://www.w3.org/TR/webauthn-3/">Web Authentication: An API for accessing Public Key Credentials Level 3</a>, W3C Recommendation 2026-08-25 — §4 용어(RP ID 규칙, discoverable credential, UV/UP, attestation), §5.1.3·§5.1.4 rpId 검증과 SecurityError, §5.4.7 AttestationConveyancePreference, §5.8.1 CollectedClientData(type·challenge·origin·crossOrigin·topOrigin), §6.1 authenticator data flags(UP bit0, UV bit2, BE bit3, BS bit4)와 rpIdHash, §6.3.3 서명 = authenticatorData ‖ hash, §7.1 step 14 rpIdHash 검증. 인용문은 전부 HTML판에서 직접 확인</li>
+  <li><a href="https://fidoalliance.org/fido2/">FIDO Alliance — FIDO2</a> — "FIDO2 is an open authentication standard that was developed by the FIDO Alliance." WebAuthn+CTAP 구성과 CTAP 2.2 언급은 <span class="est">추정</span> (페이지 요약에서만 확인)</li>
+  <li><a href="https://passkeys.dev/docs/reference/terms/">passkeys.dev Terms</a> (2026-02) — "Roaming authenticators attach to users' devices in using USB, NFC, and/or Bluetooth", hybrid transport = CTAP</li>
+  <li>FIDO 1.0 (UAF·U2F) 최종 2014-12-09 — 0장 역사 페이지 참조</li>
+</ul>
+
+</main>
+</div>
+<footer class="site">전동호 (David Jeon) · 1차 출처(RFC·W3C/FIDO·NIST SP) 대조 후 확정한 내용만 "확정", 아니면 "추정"으로 표시</footer>
+</body>
+</html>

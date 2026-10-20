@@ -1,0 +1,91 @@
+<h1>패스키: synced vs device-bound</h1>
+<p class="sub">같은 WebAuthn 자격증명인데 어디에 복제되느냐로 위협 모델이 갈린다. 서버는 플래그 두 비트로 그 차이를 본다</p>
+
+<div class="def"><b>패스키(passkey)</b>는 FIDO2/WebAuthn의 <b>discoverable credential</b>에 2022년 Apple·Google·Microsoft가 붙인 사용자용 이름이다. <b>synced passkey</b>는 플랫폼 계정(iCloud 키체인·Google 패스워드 관리자 등)으로 기기 간 복제되는 것, <b>device-bound passkey</b>는 한 인증기에 묶여 나갈 수 없는 것이다. WebAuthn은 이를 multi-device / single-device credential이라 부르고 authenticator data의 <b>BE·BS 플래그</b>로 서버에 알린다.</div>
+
+<svg class="fig" viewBox="0 0 960 320" xmlns="http://www.w3.org/2000/svg" font-family="Apple SD Gothic Neo, Pretendard, Helvetica, Arial, sans-serif" font-size="12">
+  <defs>
+    <marker id="ar5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1a1f2b"/>
+    </marker>
+  </defs>
+  <!-- left: synced -->
+  <text x="240" y="34" text-anchor="middle" font-weight="700" font-size="14" fill="#c2410c">synced passkey (multi-device, BE=1)</text>
+  <rect x="40" y="110" width="120" height="70" rx="10" fill="#fff" stroke="#1a1f2b" stroke-width="1.5"/>
+  <text x="100" y="138" text-anchor="middle" font-weight="700">iPhone</text><text x="100" y="156" text-anchor="middle" font-size="11" fill="#5c6474">Secure Enclave</text><text x="100" y="170" text-anchor="middle" font-size="11" fill="#c2410c">키 K</text>
+  <rect x="320" y="110" width="120" height="70" rx="10" fill="#fff" stroke="#1a1f2b" stroke-width="1.5"/>
+  <text x="380" y="138" text-anchor="middle" font-weight="700">MacBook</text><text x="380" y="156" text-anchor="middle" font-size="11" fill="#5c6474">Secure Enclave</text><text x="380" y="170" text-anchor="middle" font-size="11" fill="#c2410c">키 K (복제본)</text>
+  <ellipse cx="240" cy="80" rx="80" ry="26" fill="#fff5f0" stroke="#c2410c"/>
+  <text x="240" y="77" text-anchor="middle" fill="#c2410c" font-weight="700">iCloud 키체인</text><text x="240" y="92" text-anchor="middle" fill="#c2410c" font-size="10.5">종단간 암호화</text>
+  <line x1="150" y1="110" x2="185" y2="95" stroke="#c2410c" stroke-width="1.4" marker-end="url(#ar5)"/>
+  <line x1="295" y1="95" x2="330" y2="110" stroke="#c2410c" stroke-width="1.4" marker-end="url(#ar5)"/>
+  <rect x="60" y="205" width="360" height="90" rx="8" fill="#fff" stroke="#d9dde4"/>
+  <text x="240" y="225" text-anchor="middle" font-size="11.5">잃어버려도 다른 기기에서 그대로 씀 → <tspan font-weight="700">복구 = 플랫폼 계정 복구</tspan></text>
+  <text x="240" y="243" text-anchor="middle" font-size="11.5">복제 경로가 있다 = 플랫폼 계정이 뚫리면 키도 따라감</text>
+  <text x="240" y="261" text-anchor="middle" font-size="11.5">attestation 없음 (복제본은 "그 하드웨어"임을 증명 못 함)</text>
+  <text x="240" y="284" text-anchor="middle" font-size="11" fill="#5c6474">소비자 서비스 기본. Google·Apple·MS 계정, 네이버 등</text>
+
+  <line x1="480" y1="40" x2="480" y2="300" stroke="#d9dde4" stroke-dasharray="4 4"/>
+
+  <!-- right: device-bound -->
+  <text x="720" y="34" text-anchor="middle" font-weight="700" font-size="14" fill="#15803d">device-bound passkey (single-device, BE=0)</text>
+  <rect x="640" y="90" width="160" height="90" rx="10" fill="#fff" stroke="#1a1f2b" stroke-width="1.5"/>
+  <text x="720" y="118" text-anchor="middle" font-weight="700">보안키 · TPM · 기업폰</text><text x="720" y="136" text-anchor="middle" font-size="11" fill="#5c6474">YubiKey, Windows Hello for Business</text>
+  <text x="720" y="156" text-anchor="middle" font-size="11" fill="#15803d">키 K — export 명령 자체가 없음</text>
+  <text x="720" y="171" text-anchor="middle" font-size="11" fill="#15803d">시도 횟수 제한 · 칩 밖으로 안 나감</text>
+  <rect x="540" y="205" width="360" height="90" rx="8" fill="#fff" stroke="#d9dde4"/>
+  <text x="720" y="225" text-anchor="middle" font-size="11.5">잃어버리면 그 키는 끝 → <tspan font-weight="700">복구 = 서비스의 재등록 절차</tspan></text>
+  <text x="720" y="243" text-anchor="middle" font-size="11.5">복제 경로가 없다 = 공격자는 기기를 물리적으로 가져야 함</text>
+  <text x="720" y="261" text-anchor="middle" font-size="11.5">attestation 가능 ("승인된 하드웨어"를 서버가 확인)</text>
+  <text x="720" y="284" text-anchor="middle" font-size="11" fill="#5c6474">기업·정부·AAL3. 보통 키 2개(예비) 등록</text>
+</svg>
+<p class="cap">가운데에 셋째 방식이 있다: <b>hybrid(cross-device)</b> — 노트북 화면의 QR을 폰으로 찍고 BLE로 근접을 확인해 폰의 패스키로 노트북 세션에 로그인. 키는 안 움직이고 서명만 건너간다.</p>
+
+<h2>서버가 둘을 구분하는 법 — BE·BS 두 비트</h2>
+<p>WebAuthn L3 §6.1의 authenticator data flags에 "Bit 3: Backup Eligibility (BE)"와 "Bit 4: Backup State (BS)"가 있다. 스펙은 "The BE flag SHALL be set if and only if the credential is a multi-device credential"이라고 못 박는다. BE=0/BS=0이면 single-device, BE=1이면 multi-device이고 BS는 지금 실제로 백업됐는지다(§6.1.3: 0/1 조합은 불허). 서버는 등록 때 이 비트를 저장해 두고 정책을 건다 — 기업 IdP가 "BE=1은 거부"로 설정하면 synced 패스키는 못 쓰고 보안키·TPM만 통과한다. 반대로 소비자 서비스는 BE=1을 환영한다. 기기를 바꿔도 계정이 살아 있어야 고객센터 비용이 줄기 때문이다.</p>
+<table>
+  <tr><th>BE</th><th>BS</th><th>뜻 (§6.1.3)</th><th>예</th></tr>
+  <tr><td>0</td><td>0</td><td>single-device credential</td><td>보안키, Windows Hello for Business, 백업 끈 플랫폼 키</td></tr>
+  <tr><td>1</td><td>0</td><td>multi-device, 아직 백업 안 됨</td><td>iCloud 키체인 동기화 켜기 전</td></tr>
+  <tr><td>1</td><td>1</td><td>multi-device, 백업됨</td><td>일반 소비자 패스키</td></tr>
+  <tr><td>0</td><td>1</td><td>불허</td><td>—</td></tr>
+</table>
+
+<h2>복제 가능성이 위협 모델을 어떻게 바꾸나</h2>
+<p>device-bound는 단순하다. 개인키는 칩 안에서 만들어지고, 꺼내는 명령이 프로토콜에 없다. 루팅·메모리 덤프로도 못 꺼낸다(칩이 OS와 분리되어 있으니). 공격자가 할 수 있는 건 기기 자체를 훔쳐 UV(PIN·생체)를 통과하는 것이고, 시도 횟수 제한이 있으니 PIN 오프라인 추측도 없다. 위협이 "원격"에서 "물리"로 축소된다.</p>
+<p>synced는 그 칩의 키를 <i>플랫폼 계정</i>이 종단간 암호화로 복제한다. Apple·Google은 복제본이 자기 서버에서도 열리지 않도록(기기 PIN에서 유도한 키로 감싸는 식) 설계했다고 설명하지만(<span class="est">추정</span>: 각사 보안 백서 원문은 이 세션에서 미확인), 중요한 건 암호 설계가 아니라 <b>복구 경로가 생겼다</b>는 사실이다. 새 iPhone에서 iCloud 계정에 로그인하면 패스키가 따라온다 — 그 로그인이 뚫리면 패스키도 따라간다. 그래서 synced 패스키의 강도는 "그 플랫폼 계정의 등록·복구 강도"이고, 이는 0장의 명제(인증 강도 = 가장 약한 고리)의 정확한 사례다. 2024년 FIDO가 발표한 Credential Exchange 규격은 패스키를 한 관리자에서 다른 관리자로 옮기는 표준 경로를 더한다(<span class="est">추정</span>: 규격 발행 상태·시점은 미확인) — 편의와 함께 "옮기는 순간"이라는 표면이 하나 더 생긴다.</p>
+
+<h2>패스키가 있어도 패스워드가 남는 이유 — 다운그레이드</h2>
+<p>대부분 서비스에서 패스키를 만들어도 패스워드 입력란은 그대로 있다. "패스키로 로그인" 옆에 "비밀번호로 로그인"이 있고, 공격자는 당연히 후자를 친다. 피싱 페이지는 패스키 버튼을 그리지 않으면 된다. 그래서 <b>패스키 등록 ≠ 패스워드 제거</b>이고, 피싱 내성은 서비스가 패스워드 경로를 끊었을 때만 계정 수준에서 성립한다. 측정치가 이를 보여준다: 패스키 활성화 75%인데 "가능하면 항상" 사용은 49%(FIDO 2026), 패스키를 배포한 기업에서도 직원 1차 로그인의 57%는 패스워드 기반(같은 보고서). 지원 사이트 872개를 분석한 연구는 평가 대상 103개 중 53개에서 고위험 취약점을 찾았는데(Jannett et al., USENIX Security 2026), 다수가 등록·복구·대체 로그인 경로 쪽이다(<span class="est">추정</span>: 세부 분류는 원문 미확인).</p>
+
+<h2>어디서 쓸 수 있나 (2026-10 기준)</h2>
+<p>플랫폼 계정(Apple·Google·Microsoft), Amazon, PayPal, eBay, Shopify, GitHub, LinkedIn, Dropbox, Adobe, X, TikTok, WhatsApp, Discord, Nintendo, PlayStation, 국내는 네이버(2024)·삼성 계정. 카카오·토스·은행권은 <span class="est">확인 필요</span>. 분모로 보면 Tranco 상위 10만 사이트 중 11.3%(PAM 2026), Top-100 중 48%(FIDO 2025). 지원하는 곳의 75%도 자체 구현이 아니라 구글·애플 로그인(연합) 경유다 — 즉 패스키 채택의 상당 부분은 "IdP가 패스키를 받는다"이지 "그 서비스가 WebAuthn을 구현했다"가 아니다.</p>
+
+<h2>무엇을 지키고 무엇을 못 지키나 (FIDO2 공통 + 패스키 특유)</h2>
+<table>
+  <tr><th>위협</th><th>device-bound</th><th>synced</th><th>왜</th></tr>
+  <tr><td>피싱 · AiTM · 추측 · 스터핑 · DB 유출</td><td class="ok">막음</td><td class="ok">막음</td><td>FIDO2 공통 (앞 페이지)</td></tr>
+  <tr><td>원격 키 추출</td><td class="ok">막음</td><td class="ok">막음(기기에서) / <span class="no">플랫폼 계정 경유 가능</span></td><td>synced는 복제 경로가 곧 추출 경로</td></tr>
+  <tr><td>기기 분실 → 계정 상실</td><td class="no">발생 (재등록)</td><td class="ok">막음</td><td>복구 가능성과 복제 가능성은 같은 속성의 양면</td></tr>
+  <tr><td>플랫폼 계정 탈취</td><td class="ok">무관</td><td class="no">패스키 전부 따라감</td><td>synced의 상한 = iCloud/Google 계정 강도</td></tr>
+  <tr><td>소프트웨어 인증기 위장</td><td class="ok">attestation으로 차단</td><td class="no">못 막음</td><td>synced는 attestation 없음</td></tr>
+  <tr><td>패스워드 경로 다운그레이드</td><td class="no">못 막음</td><td class="no">못 막음</td><td>서비스가 패스워드를 남겨 두는 한. 방식이 아니라 배포의 문제</td></tr>
+  <tr><td>세션 탈취 · 복구 남용</td><td class="no">못 막음</td><td class="no">못 막음</td><td>인증 밖의 표면</td></tr>
+</table>
+
+<h2>흔한 오해</h2>
+<div class="box"><b>"패스키는 Google에 하나 만들면 다 되는 것."</b> 서비스별이다. Google에 만든 패스키는 Google 계정용. 다른 사이트는 각각 등록해야 하고, "Google로 로그인"은 연합(5장)이지 그 사이트의 패스키가 아니다.</div>
+<div class="box"><b>"패스워드 관리자에 저장된 패스워드 = 패스키."</b> 둘 다 같은 앱(Google 패스워드 관리자, 1Password)에 들어 있지만 저장된 패스워드는 여전히 패스워드다 — 서버에 해시가 남고, 붙여넣으면 피싱된다. 관리자는 저장소이지 인증 방식이 아니다(1장).</div>
+<div class="box"><b>"synced는 약하고 device-bound는 강하다."</b> 위협 모델이 다를 뿐이다. synced는 원격 공격자에게 플랫폼 계정이라는 표면을 하나 더 주고, device-bound는 사용자에게 분실 = 잠금이라는 비용을 준다. 어느 쪽이 맞는지는 "누가 공격자인가"와 "복구를 누가 감당하나"로 정한다.</div>
+
+<h2>내 연구와의 접점</h2>
+<div class="box">패스키는 "사람이 고른 비밀"을 인증에서 빼지만 <b>두 군데</b>에 되돌려 놓는다. 첫째, synced의 상한인 플랫폼 계정 — 그 계정의 복구는 대개 패스워드+SMS다. 둘째, 다운그레이드 경로 — 패스키 옆의 패스워드 입력란. 그래서 "패스키 지원 서비스"에서도 PSI가 재는 예측 가능성은 그대로 공격 표면이고, 그 서비스의 실제 보안 등급은 패스키가 아니라 남아 있는 패스워드 경로로 정해진다. 측정 대상이 사라지는 게 아니라 위치가 옮겨 간다.</div>
+
+<h2>참고 표준·문헌 (확인한 것)</h2>
+<ul class="refs">
+  <li><a href="https://www.w3.org/TR/webauthn-3/">WebAuthn Level 3</a> (W3C Rec 2026-08-25) — §4 Backup Eligibility: "A backup eligible public key credential source is referred to as a multi-device credential whereas one that is not backup eligible is referred to as a single-device credential"; §1.2.1 "multi-device credentials (commonly referred to as synced passkeys)", §1.2.2 "single-device credentials (commonly referred to as device-bound passkeys)"; §6.1 BE bit 3·BS bit 4, "The BE flag SHALL be set if and only if the credential is a multi-device credential"; §6.1.3 조합표(0/1 불허); §6.2.3 "discoverable credentials, also called passkeys"</li>
+  <li><a href="https://passkeys.dev/docs/reference/terms/">passkeys.dev Terms</a> (2026-02) — Passkey: "The high level, end-user centric term for a FIDO2/WebAuthn Discoverable Credential"; Device-bound passkey: "A WebAuthn Discoverable Credential that is bound to a single authenticator… the credential cannot leave the device"; Credential Exchange: "A standardized process to securely transfer passkeys, passwords, and other types of information from one passkey provider to another"</li>
+  <li><a href="https://fidoalliance.org/passkeys/">FIDO Alliance — Passkeys</a> — "Passkeys are FIDO cryptographic credentials that are tied to a user's account on a website or application." 패스키 공동 발표 2022-05-05</li>
+  <li><a href="https://fidoalliance.org/specifications-credential-exchange-specifications/">FIDO Credential Exchange Specifications</a> — 목적 문장 확인; 발행 상태·일자는 페이지에 없음 (<span class="est">추정</span>)</li>
+  <li>통계 — <a href="https://www.arxiv.org/pdf/2602.15135">Bhardwaj &amp; Sastry, PAM 2026</a> (11.3%, 지원 사이트의 75% IdP 경유) · <a href="https://fidoalliance.org/wp-content/uploads/2026/05/The-State-of-Passkeys-Global-Consumer-and-Workforce-Report-1.pdf">FIDO State of Passkeys 2026</a> (75%/49%, 기업 57% vs 30%) · <a href="https://fidoalliance.org/fido-alliance-champions-widespread-passkey-adoption-and-a-passwordless-future-on-world-passkey-day-2025/">FIDO World Passkey Day 2025</a> (Top-100 48%) · Jannett et al., USENIX Security 2026 (872개 사이트, 103개 중 53개 고위험; 세부는 <span class="est">추정</span>)</li>
+</ul>
