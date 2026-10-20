@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사용자 인증 연구소 — 사용자 인증 연구소</title>
+<link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+<header class="site">
+  <a class="brand" href="index.html">사용자 인증 연구소</a>
+  <span class="tag">패스워드 이후의 인증을 기초부터 — 공부 기록</span>
+</header>
+<div class="layout">
+<nav class="toc">
+  <ul>
+<li class="chap">0. 인증의 기초<ul>
+<li class="todo">식별·인증·인가와 인증 요소</li>
+<li class="todo">위협 모델 어휘</li>
+</ul></li>
+<li class="chap">1. 패스워드<ul>
+<li class="todo">서버 저장: 해시·솔트·KDF</li>
+<li class="todo">정책의 역사와 NIST SP 800-63B</li>
+<li class="todo">추측 모델 계보와 강도 추정</li>
+<li class="todo">패스워드 관리자</li>
+</ul></li>
+<li class="chap">2. OTP와 MFA<ul>
+<li class="todo">HOTP·TOTP와 공유 비밀</li>
+<li class="todo">푸시·SMS·MFA 피로, 그리고 MFA가 못 막는 것</li>
+</ul></li>
+<li class="chap">3. 공개키 기반 인증<ul>
+<li class="todo">챌린지-응답과 PKI·인증서</li>
+<li class="todo">공동인증서(구 공인인증서)</li>
+<li class="todo">클라이언트 인증서·스마트카드·SSH 키</li>
+</ul></li>
+<li class="chap">4. FIDO와 패스키<ul>
+<li class="todo">U2F → FIDO2: WebAuthn + CTAP</li>
+<li class="todo">패스키: synced vs device-bound</li>
+<li class="todo">패스키 vs 공동인증서</li>
+</ul></li>
+<li class="chap">5. 연합 인증과 SSO<ul>
+<li class="todo">IdP와 SSO 개념</li>
+<li><a href="kerberos.html">Kerberos 인증 흐름</a></li>
+<li class="todo">SAML 2.0</li>
+<li class="todo">OAuth 2.0 vs OIDC</li>
+<li class="todo">토큰·세션·쿠키</li>
+<li class="todo">Entra ID·Okta와 AD</li>
+</ul></li>
+<li class="chap">6. 생체 인증<ul>
+<li class="todo">로컬 매칭 vs 서버 매칭, FAR·FRR</li>
+</ul></li>
+<li class="chap">7. 계정 등록·복구<ul>
+<li class="todo">가장 약한 고리</li>
+</ul></li>
+<li class="chap">8. 실전 공격 사례<ul>
+<li class="todo">Kerberoasting부터 세션 탈취까지</li>
+</ul></li>
+<li class="chap">9. 실습 랩<ul>
+<li class="todo">WebAuthn 등록·인증 데모</li>
+<li class="todo">TOTP 생성기</li>
+<li class="todo">방식별 "서버에 남는 것" 비교</li>
+</ul></li>
+  </ul>
+</nav>
+<main class="wrap">
+<h1>사용자 인증 연구소</h1>
+<p class="sub">패스워드 이후의 인증 수단(OTP·MFA, PKI, FIDO/패스키, SSO, 생체)을 기초부터 실제 쓰이는 방식까지 — 박사 디펜스 준비 중 시작한 공부 기록</p>
+
+<p>패스워드 보안을 연구하면서 정작 패스워드 "다음"에 오는 인증 수단들을 체계적으로 알지 못한다는 걸 깨달았다. 이 사이트는 그 공백을 채우는 핸드북이다. 블로그가 아니라 주제별 페이지가 쌓이는 위키이고, 각 페이지는 다시 읽었을 때 5분 안에 핵심을 복기할 수 있도록 쓴다.</p>
+
+<h2>페이지 공통 틀</h2>
+<p>모든 주제 페이지는 같은 순서를 따른다. <b>한 줄 정의</b> → <b>동작 도식</b>(시퀀스) → <b>무엇을 지키고 무엇을 못 지키나</b>(위협 모델 표) → <b>실제 쓰이는 곳</b> → <b>흔한 오해</b> → <b>내 연구와의 접점</b> → <b>참고 표준·문헌</b>. 설명은 1차 출처(RFC, W3C/FIDO 스펙, NIST SP, 공식 문서)로 대조한 것만 확정으로 쓰고, 확실하지 않은 부분은 <span class="est">추정</span>으로 표시한다.</p>
+
+<h2>커리큘럼</h2>
+<p>기초에서 실제로 가는 순서. 회색은 아직 안 쓴 페이지.</p>
+<nav class="toc inline"><ul>
+<li class="chap">0. 인증의 기초<ul>
+<li class="todo">식별·인증·인가와 인증 요소</li>
+<li class="todo">위협 모델 어휘</li>
+</ul></li>
+<li class="chap">1. 패스워드<ul>
+<li class="todo">서버 저장: 해시·솔트·KDF</li>
+<li class="todo">정책의 역사와 NIST SP 800-63B</li>
+<li class="todo">추측 모델 계보와 강도 추정</li>
+<li class="todo">패스워드 관리자</li>
+</ul></li>
+<li class="chap">2. OTP와 MFA<ul>
+<li class="todo">HOTP·TOTP와 공유 비밀</li>
+<li class="todo">푸시·SMS·MFA 피로, 그리고 MFA가 못 막는 것</li>
+</ul></li>
+<li class="chap">3. 공개키 기반 인증<ul>
+<li class="todo">챌린지-응답과 PKI·인증서</li>
+<li class="todo">공동인증서(구 공인인증서)</li>
+<li class="todo">클라이언트 인증서·스마트카드·SSH 키</li>
+</ul></li>
+<li class="chap">4. FIDO와 패스키<ul>
+<li class="todo">U2F → FIDO2: WebAuthn + CTAP</li>
+<li class="todo">패스키: synced vs device-bound</li>
+<li class="todo">패스키 vs 공동인증서</li>
+</ul></li>
+<li class="chap">5. 연합 인증과 SSO<ul>
+<li class="todo">IdP와 SSO 개념</li>
+<li><a href="kerberos.html">Kerberos 인증 흐름</a></li>
+<li class="todo">SAML 2.0</li>
+<li class="todo">OAuth 2.0 vs OIDC</li>
+<li class="todo">토큰·세션·쿠키</li>
+<li class="todo">Entra ID·Okta와 AD</li>
+</ul></li>
+<li class="chap">6. 생체 인증<ul>
+<li class="todo">로컬 매칭 vs 서버 매칭, FAR·FRR</li>
+</ul></li>
+<li class="chap">7. 계정 등록·복구<ul>
+<li class="todo">가장 약한 고리</li>
+</ul></li>
+<li class="chap">8. 실전 공격 사례<ul>
+<li class="todo">Kerberoasting부터 세션 탈취까지</li>
+</ul></li>
+<li class="chap">9. 실습 랩<ul>
+<li class="todo">WebAuthn 등록·인증 데모</li>
+<li class="todo">TOTP 생성기</li>
+<li class="todo">방식별 "서버에 남는 것" 비교</li>
+</ul></li>
+</ul></nav>
+
+</main>
+</div>
+<footer class="site">전동호 (David Jeon) · 1차 출처(RFC·W3C/FIDO·NIST SP) 대조 후 확정한 내용만 "확정", 아니면 "추정"으로 표시</footer>
+</body>
+</html>

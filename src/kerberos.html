@@ -1,0 +1,151 @@
+<h1>Kerberos 인증 흐름</h1>
+<p class="sub">Active Directory가 직원을 인증하는 방식 — 패스워드는 네트워크에 한 번도 흐르지 않고, 대신 "티켓"이 돈다</p>
+
+<div class="def"><b>Kerberos</b>는 신뢰받는 제3자(KDC)가 발급하는 <b>대칭키 암호화 티켓</b>으로 클라이언트와 서비스가 서로를 인증하는 네트워크 인증 프로토콜이다 (RFC 4120). Active Directory 도메인 로그인의 기본 프로토콜.</div>
+
+<div class="legend">
+  <span class="k1">K<sub>user</sub> — 사용자 패스워드에서 만든 키</span>
+  <span class="k2">K<sub>tgs</sub> — KDC만 아는 키 (AD의 krbtgt 계정)</span>
+  <span class="k3">K<sub>svc</sub> — 서비스 서버의 키 (서비스 계정 패스워드)</span>
+  <span class="k4">SK — 그 자리에서 만든 1회용 세션 키</span>
+</div>
+
+<svg class="fig" viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" font-family="Apple SD Gothic Neo, Pretendard, Helvetica, Arial, sans-serif" font-size="13">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1a1f2b"/>
+    </marker>
+  </defs>
+  <!-- actors -->
+  <g font-weight="700" font-size="14" text-anchor="middle">
+    <rect x="60" y="20" width="170" height="54" rx="10" fill="#fff" stroke="#1a1f2b" stroke-width="1.5"/>
+    <text x="145" y="42">Client</text><text x="145" y="60" font-weight="400" font-size="12" fill="#5c6474">직원 PC (jdh)</text>
+    <rect x="395" y="20" width="170" height="54" rx="10" fill="#fff" stroke="#1a1f2b" stroke-width="1.5"/>
+    <text x="480" y="42">KDC = 도메인 컨트롤러</text><text x="480" y="60" font-weight="400" font-size="12" fill="#5c6474">AS + TGS</text>
+    <rect x="730" y="20" width="170" height="54" rx="10" fill="#fff" stroke="#1a1f2b" stroke-width="1.5"/>
+    <text x="815" y="42">Service</text><text x="815" y="60" font-weight="400" font-size="12" fill="#5c6474">파일서버 등</text>
+  </g>
+  <!-- lifelines -->
+  <g stroke="#b8bfca" stroke-dasharray="4 4">
+    <line x1="145" y1="74" x2="145" y2="540"/><line x1="480" y1="74" x2="480" y2="540"/><line x1="815" y1="74" x2="815" y2="540"/>
+  </g>
+  <!-- phase bands -->
+  <g font-size="11" font-weight="700" fill="#5c6474">
+    <text x="12" y="112">① 로그인</text><text x="12" y="126">(AS 교환)</text>
+    <text x="12" y="272">② 티켓 발급</text><text x="12" y="286">(TGS 교환)</text>
+    <text x="12" y="432">③ 서비스 접속</text><text x="12" y="446">(AP 교환)</text>
+  </g>
+  <!-- 1 AS-REQ -->
+  <line x1="150" y1="105" x2="475" y2="105" stroke="#1a1f2b" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="312" y="98" text-anchor="middle" font-weight="700">1. AS-REQ</text>
+  <rect x="200" y="112" width="225" height="30" rx="6" fill="#fff" stroke="#0a4fd6"/>
+  <text x="312" y="131" text-anchor="middle" fill="#0a4fd6">"나 jdh" + { 현재시각 }<tspan font-weight="700">K_user</tspan></text>
+  <!-- 2 AS-REP -->
+  <line x1="475" y1="190" x2="150" y2="190" stroke="#1a1f2b" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="312" y="183" text-anchor="middle" font-weight="700">2. AS-REP</text>
+  <rect x="165" y="197" width="135" height="30" rx="6" fill="#fff" stroke="#7c3aed"/>
+  <text x="232" y="216" text-anchor="middle" fill="#7c3aed">{ SK1 }<tspan font-weight="700" fill="#0a4fd6">K_user</tspan></text>
+  <rect x="310" y="197" width="150" height="46" rx="6" fill="#fff" stroke="#c2410c"/>
+  <text x="385" y="214" text-anchor="middle" fill="#c2410c" font-weight="700">TGT</text>
+  <text x="385" y="230" text-anchor="middle" fill="#c2410c" font-size="11">{ jdh, SK1, 그룹, 만료 }K_tgs</text>
+  <!-- 3 TGS-REQ -->
+  <line x1="150" y1="275" x2="475" y2="275" stroke="#1a1f2b" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="312" y="268" text-anchor="middle" font-weight="700">3. TGS-REQ</text>
+  <rect x="160" y="282" width="90" height="30" rx="6" fill="#fff" stroke="#c2410c"/>
+  <text x="205" y="301" text-anchor="middle" fill="#c2410c" font-weight="700">TGT</text>
+  <rect x="258" y="282" width="120" height="30" rx="6" fill="#fff" stroke="#7c3aed"/>
+  <text x="318" y="301" text-anchor="middle" fill="#7c3aed">{ jdh, 시각 }SK1</text>
+  <rect x="386" y="282" width="86" height="30" rx="6" fill="#fff" stroke="#5c6474"/>
+  <text x="429" y="301" text-anchor="middle" fill="#5c6474">"파일서버"</text>
+  <!-- 4 TGS-REP -->
+  <line x1="475" y1="355" x2="150" y2="355" stroke="#1a1f2b" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="312" y="348" text-anchor="middle" font-weight="700">4. TGS-REP</text>
+  <rect x="165" y="362" width="120" height="30" rx="6" fill="#fff" stroke="#7c3aed"/>
+  <text x="225" y="381" text-anchor="middle" fill="#7c3aed">{ SK2 }SK1</text>
+  <rect x="295" y="362" width="170" height="46" rx="6" fill="#fff" stroke="#15803d"/>
+  <text x="380" y="379" text-anchor="middle" fill="#15803d" font-weight="700">서비스 티켓</text>
+  <text x="380" y="395" text-anchor="middle" fill="#15803d" font-size="11">{ jdh, SK2, 그룹, 만료 }K_svc</text>
+  <!-- 5 AP-REQ -->
+  <line x1="150" y1="440" x2="810" y2="440" stroke="#1a1f2b" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="480" y="433" text-anchor="middle" font-weight="700">5. AP-REQ</text>
+  <rect x="330" y="447" width="130" height="30" rx="6" fill="#fff" stroke="#15803d"/>
+  <text x="395" y="466" text-anchor="middle" fill="#15803d" font-weight="700">서비스 티켓</text>
+  <rect x="470" y="447" width="130" height="30" rx="6" fill="#fff" stroke="#7c3aed"/>
+  <text x="535" y="466" text-anchor="middle" fill="#7c3aed">{ jdh, 시각 }SK2</text>
+  <!-- 6 AP-REP -->
+  <line x1="810" y1="515" x2="150" y2="515" stroke="#1a1f2b" stroke-width="1.6" marker-end="url(#ar)" stroke-dasharray="6 3"/>
+  <text x="480" y="508" text-anchor="middle" font-weight="700">6. AP-REP (선택, 서버 신원 확인)</text>
+  <rect x="415" y="522" width="130" height="26" rx="6" fill="#fff" stroke="#7c3aed"/>
+  <text x="480" y="540" text-anchor="middle" fill="#7c3aed">{ 시각+1 }SK2</text>
+</svg>
+<p class="cap">표기: <code>{ 내용 }K</code> = 내용을 키 K로 암호화. 색은 "누가 열 수 있는 키인가"를 뜻함.</p>
+
+<h2>단계별로</h2>
+<div class="steps">
+  <div class="step"><b class="n" style="background:var(--c1)">1</b><h3>AS-REQ — "나 jdh, 로그인할게"</h3>
+    <p>PC가 패스워드로 K<sub>user</sub>를 만들어 <b>현재 시각을 암호화</b>해 보냄(pre-authentication). 패스워드 자체는 보내지 않음. KDC는 자기가 가진 jdh의 K<sub>user</sub>로 풀어서 시각이 맞으면 "패스워드를 아는 사람"으로 인정.</p></div>
+  <div class="step"><b class="n" style="background:var(--c2)">2</b><h3>AS-REP — 세션키 + TGT</h3>
+    <p>두 덩어리. (a) 세션키 SK1을 K<sub>user</sub>로 잠가서 — PC만 열 수 있음. (b) <b>TGT</b>(Ticket Granting Ticket): "jdh, SK1, 소속 그룹(PAC), 10시간 유효"를 <b>K<sub>tgs</sub></b>로 잠근 것 — PC는 못 열고 들고만 다님. 여기서 패스워드 역할 끝. 이후 10시간은 TGT가 패스워드를 대신함.</p></div>
+  <div class="step"><b class="n" style="background:var(--c2)">3</b><h3>TGS-REQ — "파일서버 티켓 주세요"</h3>
+    <p>TGT + <b>authenticator</b>({jdh, 현재시각}을 SK1로 암호화) + 원하는 서비스 이름. KDC는 TGT를 K<sub>tgs</sub>로 열어 SK1을 꺼내고, 그 SK1로 authenticator가 풀리면 "TGT의 진짜 주인"임을 확인. 시각이 5분 이상 어긋나면 거부(재전송 방지).</p></div>
+  <div class="step"><b class="n" style="background:var(--c3)">4</b><h3>TGS-REP — 서비스 티켓</h3>
+    <p>또 두 덩어리. (a) 새 세션키 SK2를 SK1로 잠가서. (b) <b>서비스 티켓</b>: "jdh, SK2, 그룹, 만료"를 <b>K<sub>svc</sub></b>(파일서버의 키)로 잠근 것. PC도 KDC 이외 누구도 못 여는 봉투.</p></div>
+  <div class="step"><b class="n" style="background:var(--c3)">5</b><h3>AP-REQ — 파일서버에 제시</h3>
+    <p>서비스 티켓 + authenticator({jdh, 시각}을 SK2로). 파일서버는 자기 K<sub>svc</sub>로 티켓을 열어 SK2와 그룹 정보를 얻고, SK2로 authenticator가 풀리면 접속 허용. <b>KDC에 물어보지 않음</b> — 티켓 자체가 증거.</p></div>
+  <div class="step"><b class="n" style="background:var(--c4)">6</b><h3>AP-REP — 서버도 자기 증명 (선택)</h3>
+    <p>서버가 시각+1을 SK2로 암호화해 돌려줌. SK2를 아는 건 진짜 파일서버뿐이므로 PC도 서버가 가짜가 아님을 확인(상호 인증).</p></div>
+</div>
+<p class="cap">"10시간"과 "5분"은 RFC가 아니라 Windows 기본값(TGT 수명 10시간, 허용 시각 차 5분). RFC 4120은 시각 차 한계를 예시로만 5분을 든다(§3.2.3).</p>
+
+<h2>왜 안전한가 — 설계 포인트 4개</h2>
+<div class="box"><b>패스워드가 네트워크에 안 흐른다.</b> 1단계에서 패스워드로 만든 키로 "시각"만 암호화. 도청자는 암호문만 봄. (단, 이 암호문을 오프라인에서 사전 공격할 수는 있음 → 아래 "공격" 참고)</div>
+<div class="box"><b>티켓은 받는 쪽만 열 수 있다.</b> TGT는 KDC 키, 서비스 티켓은 서비스 키로 잠김. 클라이언트는 운반만 하므로 내용(그룹·만료)을 위조 못 함.</div>
+<div class="box"><b>authenticator = "지금 이 순간의 나".</b> 티켓을 훔쳐도 세션키 없이는 authenticator를 못 만들고, 시각 검사로 녹음 재생(replay)도 막음.</div>
+<div class="box"><b>인가 정보가 티켓에 실려 간다.</b> PAC(그룹 SID 목록)이 티켓 안에 있어, 서비스는 KDC에 다시 묻지 않고 권한을 결정. Entra/Okta의 SAML·OIDC 토큰이 하는 일과 같음.</div>
+
+<h2>무엇을 지키고 무엇을 못 지키나</h2>
+<table>
+  <tr><th>위협</th><th>막나</th><th>왜</th></tr>
+  <tr><td>네트워크 도청으로 패스워드 획득</td><td class="ok">막음</td><td>패스워드는 전송되지 않음. K<sub>user</sub>로 암호화한 시각만 흐름</td></tr>
+  <tr><td>메시지 재생(replay)</td><td class="ok">막음</td><td>authenticator의 시각 검사 + 서버가 최근 authenticator 캐시 (RFC 4120 §3.2.3)</td></tr>
+  <tr><td>서비스 서버 위장</td><td class="ok">막음(선택)</td><td>AP-REP 상호 인증을 요청할 때만. 클라이언트가 안 요청하면 보호 없음</td></tr>
+  <tr><td>티켓 내용 위조 (그룹·만료 조작)</td><td class="ok">막음</td><td>티켓은 KDC·서비스 키로 잠겨 클라이언트가 못 염</td></tr>
+  <tr><td>도청 암호문의 오프라인 패스워드 추측 (AS-REP roasting)</td><td class="no">못 막음</td><td>K<sub>user</sub>가 패스워드에서 유래. 약한 패스워드면 뚫림</td></tr>
+  <tr><td>서비스 계정 패스워드 오프라인 추측 (Kerberoasting)</td><td class="no">못 막음</td><td>도메인 사용자 누구나 서비스 티켓을 받을 수 있고, 티켓은 서비스 계정 패스워드 키로 잠김</td></tr>
+  <tr><td>KDC 키(krbtgt) 유출 → TGT 위조 (Golden Ticket)</td><td class="no">못 막음</td><td>K<sub>tgs</sub>를 가진 자는 KDC와 동등. 프로토콜 밖의 문제</td></tr>
+  <tr><td>티켓 + 세션키 탈취 후 재사용 (pass-the-ticket)</td><td class="no">못 막음</td><td>클라이언트 메모리에서 둘 다 훔치면 만료까지 정상 사용자와 구분 불가. 티켓의 주소 바인딩은 선택 사항</td></tr>
+  <tr><td>피싱으로 패스워드 탈취</td><td class="no">못 막음</td><td>1단계 전 단계의 문제. 패스워드를 아는 자는 누구나 K<sub>user</sub>를 만듦</td></tr>
+</table>
+
+<h2>실제 쓰이는 곳 — IdP 토큰과의 대응</h2>
+<p>Active Directory 도메인에 가입한 모든 Windows PC·서버·앱(파일 공유, SQL Server, IIS 통합 인증 등)이 기본으로 쓴다. 클라우드 IdP(Entra ID·Okta)의 SSO는 암호 방식만 다르고 구조는 같다.</p>
+<table>
+  <tr><th>Kerberos (AD, 사내)</th><th>Entra ID / Okta (클라우드 SSO)</th><th>역할</th></tr>
+  <tr><td>K<sub>user</sub> 로그인 (AS 교환)</td><td>IdP 로그인 페이지 (패스워드 / MFA / 패스키)</td><td>딱 한 번 본인 확인</td></tr>
+  <tr><td>TGT (10시간)</td><td>IdP 세션 쿠키</td><td>재로그인 없이 티켓을 더 받을 권리</td></tr>
+  <tr><td>서비스 티켓 (K<sub>svc</sub>로 암호화)</td><td>SAML assertion / OIDC ID token (IdP 개인키로 서명)</td><td>특정 앱 하나용 증명서</td></tr>
+  <tr><td>PAC (그룹 SID)</td><td>토큰 claims (groups, roles)</td><td>권한 전달</td></tr>
+  <tr><td>K<sub>svc</sub>를 미리 공유</td><td>IdP 공개키를 앱에 미리 등록 (federation)</td><td>신뢰 관계 사전 설정</td></tr>
+</table>
+<p style="font-size:13.5px">차이는 "대칭키를 미리 나눠 갖는가(Kerberos) vs 공개키 서명을 믿는가(SAML/OIDC)"뿐이고, 구조는 같다. 그래서 AD→Entra 이전이 자연스러웠음.</p>
+
+<h2>흔한 오해</h2>
+<div class="box"><b>"Kerberos는 패스워드를 안 쓴다."</b> 안 <i>보내는</i> 것이지 안 <i>쓰는</i> 것이 아니다. 사용자 키·서비스 키·krbtgt 키 전부 패스워드에서 나온다.</div>
+<div class="box"><b>"티켓만 훔치면 로그인된다."</b> 티켓만으로는 authenticator를 못 만든다. 세션키도 함께 있어야 한다 (그래서 실전 공격은 티켓+세션키를 메모리에서 함께 뽑는다).</div>
+<div class="box"><b>"AD 로그인 = NTLM."</b> 도메인 환경 기본은 Kerberos. NTLM은 이름 대신 IP로 접속하거나 Kerberos를 못 쓸 때의 폴백이며, 패스워드 해시 기반 챌린지-응답이라 더 약하다.</div>
+<div class="box"><b>"PAC는 Kerberos 표준이다."</b> PAC는 Microsoft 확장(MS-PAC). RFC 4120의 Kerberos는 인증만 하고 인가 정보는 싣지 않는다.</div>
+
+<h2>그래도 패스워드가 문제인 지점 (논문과의 접점)</h2>
+<div class="box warn"><b>AS-REP Roasting / pre-auth 오프라인 크래킹</b> — 1·2단계 암호문은 K<sub>user</sub>(= 패스워드 해시)로 잠겨 있어, 도청한 뒤 <b>오프라인에서 패스워드 추측</b>이 가능. 약한 패스워드면 뚫림.</div>
+<div class="box warn"><b>Kerberoasting</b> — 4단계 서비스 티켓은 <b>서비스 계정의 패스워드</b>로 잠겨 있음. 도메인 사용자는 누구나 아무 서비스 티켓을 요청할 수 있으므로, 받아서 오프라인으로 서비스 계정 패스워드를 추측. AD 환경 실전 공격 1순위 — 결국 패스워드 강도 문제.</div>
+<div class="box warn"><b>Golden Ticket</b> — K<sub>tgs</sub>(krbtgt 패스워드 해시)가 유출되면 공격자가 TGT를 마음대로 위조. 도메인 전체 함락.</div>
+<div class="box"><b>요지:</b> Kerberos는 패스워드를 "안 보내는" 것이지 "안 쓰는" 것이 아니다. 사용자 키·서비스 키·krbtgt 키 전부 패스워드에서 나오고, 가장 성공률 높은 AD 공격들이 그 패스워드를 오프라인에서 추측하는 것. 티켓 구조가 아무리 정교해도 바닥은 패스워드 — 본 논문이 다루는 층.</div>
+
+<h2>참고 표준·문헌</h2>
+<ul class="refs">
+  <li><a href="https://www.rfc-editor.org/rfc/rfc4120">RFC 4120</a> — The Kerberos Network Authentication Service (V5). 메시지 교환(§3), 시각 차·재생 방지(§3.2.3), 티켓 플래그(§2)</li>
+  <li><a href="https://www.rfc-editor.org/rfc/rfc3961">RFC 3961</a> — 암호 프레임워크. 패스워드 → 키 유도(string-to-key)</li>
+  <li><a href="https://www.rfc-editor.org/rfc/rfc6113">RFC 6113</a> — pre-authentication 프레임워크</li>
+  <li><a href="https://learn.microsoft.com/openspecs/windows_protocols/ms-kile/">MS-KILE</a> — Windows의 Kerberos 확장 (기본 수명·시각 차 등 정책값)</li>
+  <li><a href="https://learn.microsoft.com/openspecs/windows_protocols/ms-pac/">MS-PAC</a> — Privilege Attribute Certificate (티켓 속 그룹 정보)</li>
+</ul>
