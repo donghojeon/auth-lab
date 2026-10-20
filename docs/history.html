@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>인증의 역사 — 한 장의 맵 — 사용자 인증 연구소</title>
+<link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+<header class="site">
+  <a class="brand" href="index.html">사용자 인증 연구소</a>
+  <span class="tag">패스워드 이후의 인증을 기초부터 — 공부 기록</span>
+</header>
+<div class="layout">
+<nav class="toc">
+  <ul>
+<li class="chap">0. 인증의 기초<ul>
+<li class="cur"><a href="history.html">인증의 역사 — 한 장의 맵</a></li>
+<li><a href="basics.html">식별·인증·인가와 인증 요소</a></li>
+<li class="todo">위협 모델 어휘</li>
+</ul></li>
+<li class="chap">1. 패스워드<ul>
+<li class="todo">서버 저장: 해시·솔트·KDF</li>
+<li class="todo">정책의 역사와 NIST SP 800-63B</li>
+<li class="todo">추측 모델 계보와 강도 추정</li>
+<li class="todo">패스워드 관리자</li>
+</ul></li>
+<li class="chap">2. OTP와 MFA<ul>
+<li class="todo">HOTP·TOTP와 공유 비밀</li>
+<li class="todo">푸시·SMS·MFA 피로, 그리고 MFA가 못 막는 것</li>
+</ul></li>
+<li class="chap">3. 공개키 기반 인증<ul>
+<li class="todo">챌린지-응답과 PKI·인증서</li>
+<li class="todo">공동인증서(구 공인인증서)</li>
+<li class="todo">클라이언트 인증서·스마트카드·SSH 키</li>
+</ul></li>
+<li class="chap">4. FIDO와 패스키<ul>
+<li class="todo">U2F → FIDO2: WebAuthn + CTAP</li>
+<li class="todo">패스키: synced vs device-bound</li>
+<li class="todo">패스키 vs 공동인증서</li>
+</ul></li>
+<li class="chap">5. 연합 인증과 SSO<ul>
+<li class="todo">IdP와 SSO 개념</li>
+<li><a href="kerberos.html">Kerberos 인증 흐름</a></li>
+<li class="todo">SAML 2.0</li>
+<li class="todo">OAuth 2.0 vs OIDC</li>
+<li class="todo">토큰·세션·쿠키</li>
+<li class="todo">Entra ID·Okta와 AD</li>
+</ul></li>
+<li class="chap">6. 생체 인증<ul>
+<li class="todo">로컬 매칭 vs 서버 매칭, FAR·FRR</li>
+</ul></li>
+<li class="chap">7. 계정 등록·복구<ul>
+<li class="todo">가장 약한 고리</li>
+</ul></li>
+<li class="chap">8. 실전 공격 사례<ul>
+<li class="todo">Kerberoasting부터 세션 탈취까지</li>
+</ul></li>
+<li class="chap">9. 실습 랩<ul>
+<li class="todo">WebAuthn 등록·인증 데모</li>
+<li class="todo">TOTP 생성기</li>
+<li class="todo">방식별 "서버에 남는 것" 비교</li>
+</ul></li>
+  </ul>
+</nav>
+<main class="wrap">
+<h1>인증의 역사 — 한 장의 맵</h1>
+<p class="sub">1961년 패스워드에서 2022년 패스키까지. 새 방식은 계속 태어났지만, 가장 두꺼운 레인은 아직 패스워드다</p>
+
+<div class="def">인증 수단의 역사는 <b>"비밀을 사람이 기억한다"</b>(패스워드)에서 <b>"비밀을 기기가 들고 있다"</b>(토큰·인증서)로, 다시 <b>"비밀을 보내지 않고 서명만 보낸다"</b>(PKI·FIDO)로 옮겨 온 60년이다. 그 옆에서 <b>"한 번 인증한 결과를 재사용한다"</b>(Kerberos·SAML·OIDC)는 연합 레인이 따로 자랐다.</div>
+
+<div class="legend">
+  <span class="k1">지식 — 사람이 기억하는 비밀</span>
+  <span class="k2">소유 — 기기가 가진 비밀·키</span>
+  <span class="k3">생체 — 사람의 특징 (대개 기기 잠금 해제용)</span>
+  <span class="k4">연합 — 한 번의 인증을 여러 서비스에 전달</span>
+</div>
+
+<svg class="fig" viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" font-family="Apple SD Gothic Neo, Pretendard, Helvetica, Arial, sans-serif" font-size="11">
+  <!-- 연도 눈금: x = 130 + (연도-1960)*11.67 -->
+  <g stroke="#d9dde4" stroke-dasharray="3 3">
+    <line x1="130" y1="40" x2="130" y2="500"/><line x1="247" y1="40" x2="247" y2="500"/><line x1="363" y1="40" x2="363" y2="500"/>
+    <line x1="480" y1="40" x2="480" y2="500"/><line x1="597" y1="40" x2="597" y2="500"/><line x1="713" y1="40" x2="713" y2="500"/><line x1="830" y1="40" x2="830" y2="500"/>
+  </g>
+  <g fill="#5c6474" font-size="11" text-anchor="middle">
+    <text x="130" y="30">1960</text><text x="247" y="30">1970</text><text x="363" y="30">1980</text><text x="480" y="30">1990</text>
+    <text x="597" y="30">2000</text><text x="713" y="30">2010</text><text x="830" y="30">2020</text><text x="905" y="30">현재</text>
+  </g>
+
+  <!-- 레인: 선 굵기 = 2025–26 현재 "1차 로그인"으로 쓰이는 비중 (오른쪽 수치 참고) -->
+  <g font-size="12" font-weight="700">
+    <text x="14" y="100" fill="#0a4fd6">지식</text>
+    <text x="14" y="220" fill="#c2410c">소유</text>
+    <text x="14" y="340" fill="#15803d">생체</text>
+    <text x="14" y="450" fill="#7c3aed">연합</text>
+  </g>
+  <line x1="142" y1="96" x2="880" y2="96" stroke="#0a4fd6" stroke-width="12" stroke-linecap="round" opacity=".9"/>
+  <line x1="420" y1="216" x2="880" y2="216" stroke="#c2410c" stroke-width="5" stroke-linecap="round" opacity=".9"/>
+  <line x1="748" y1="336" x2="880" y2="336" stroke="#15803d" stroke-width="3" stroke-linecap="round" opacity=".9"/>
+  <line x1="340" y1="446" x2="880" y2="446" stroke="#7c3aed" stroke-width="7" stroke-linecap="round" opacity=".9"/>
+
+  <!-- 지식 레인 사건 -->
+  <g fill="#0a4fd6">
+    <circle cx="142" cy="96" r="5" fill="#fff" stroke="#0a4fd6" stroke-width="2"/>
+    <text x="142" y="72" text-anchor="middle" font-weight="700">1961</text><text x="142" y="84" text-anchor="middle">CTSS 패스워드</text>
+    <circle cx="352" cy="96" r="5" fill="#fff" stroke="#0a4fd6" stroke-width="2"/>
+    <text x="352" y="118" text-anchor="middle" font-weight="700">1979</text><text x="352" y="130" text-anchor="middle">Unix crypt + salt</text>
+    <text x="352" y="142" text-anchor="middle" fill="#5c6474">Morris &amp; Thompson</text>
+    <circle cx="643" cy="96" r="5" fill="#fff" stroke="#0a4fd6" stroke-width="2"/>
+    <text x="643" y="72" text-anchor="middle" font-weight="700">2004</text><text x="643" y="84" text-anchor="middle">NIST SP 800-63</text>
+    <circle cx="795" cy="96" r="5" fill="#fff" stroke="#0a4fd6" stroke-width="2"/>
+    <text x="795" y="118" text-anchor="middle" font-weight="700">2017</text><text x="795" y="130" text-anchor="middle">800-63-3: 구성 규칙·</text><text x="795" y="142" text-anchor="middle">주기 변경 철회</text>
+    <circle cx="889" cy="96" r="5" fill="#fff" stroke="#0a4fd6" stroke-width="2"/>
+    <text x="889" y="72" text-anchor="middle" font-weight="700">2025</text><text x="889" y="84" text-anchor="middle">800-63-4</text>
+  </g>
+
+  <!-- 소유 레인 사건 -->
+  <g fill="#c2410c">
+    <circle cx="420" cy="216" r="5" fill="#fff" stroke="#c2410c" stroke-width="2"/>
+    <text x="420" y="192" text-anchor="middle" font-weight="700">1985–86</text><text x="420" y="204" text-anchor="middle">SecurID 시간동기 토큰</text>
+    <circle cx="457" cy="216" r="5" fill="#fff" stroke="#c2410c" stroke-width="2"/>
+    <text x="457" y="238" text-anchor="middle" font-weight="700">1988</text><text x="457" y="250" text-anchor="middle">X.509 인증서</text>
+    <circle cx="585" cy="216" r="5" fill="#fff" stroke="#c2410c" stroke-width="2"/>
+    <text x="585" y="192" text-anchor="middle" font-weight="700">1999</text><text x="585" y="204" text-anchor="middle">전자서명법·공인인증서</text>
+    <circle cx="655" cy="216" r="5" fill="#fff" stroke="#c2410c" stroke-width="2"/>
+    <text x="655" y="238" text-anchor="middle" font-weight="700">2005</text><text x="655" y="250" text-anchor="middle">HOTP (RFC 4226)</text>
+    <circle cx="725" cy="216" r="5" fill="#fff" stroke="#c2410c" stroke-width="2"/>
+    <text x="725" y="192" text-anchor="middle" font-weight="700">2011</text><text x="725" y="204" text-anchor="middle">TOTP (RFC 6238)</text>
+    <circle cx="760" cy="216" r="5" fill="#fff" stroke="#c2410c" stroke-width="2"/>
+    <text x="772" y="238" text-anchor="middle" font-weight="700">2014</text><text x="772" y="250" text-anchor="middle">FIDO U2F 1.0</text>
+    <circle cx="818" cy="216" r="5" fill="#fff" stroke="#c2410c" stroke-width="2"/>
+    <text x="805" y="166" text-anchor="middle" font-weight="700">2019</text><text x="805" y="178" text-anchor="middle">WebAuthn L1 (FIDO2)</text>
+    <circle cx="830" cy="216" r="5" fill="#fff" stroke="#c2410c" stroke-width="2"/>
+    <text x="838" y="262" text-anchor="middle" font-weight="700">2020</text><text x="838" y="274" text-anchor="middle">공인인증서 지위 폐지</text>
+    <circle cx="854" cy="216" r="5" fill="#fff" stroke="#c2410c" stroke-width="2"/>
+    <text x="878" y="192" text-anchor="middle" font-weight="700">2022</text><text x="878" y="204" text-anchor="middle">패스키</text>
+  </g>
+
+  <!-- 생체 레인 사건 -->
+  <g fill="#15803d">
+    <circle cx="748" cy="336" r="5" fill="#fff" stroke="#15803d" stroke-width="2"/>
+    <text x="748" y="312" text-anchor="middle" font-weight="700">2013</text><text x="748" y="324" text-anchor="middle">Touch ID</text>
+    <circle cx="795" cy="336" r="5" fill="#fff" stroke="#15803d" stroke-width="2"/>
+    <text x="795" y="358" text-anchor="middle" font-weight="700">2017</text><text x="795" y="370" text-anchor="middle">Face ID</text>
+    <text x="620" y="340" text-anchor="middle" fill="#5c6474">스마트폰 이전에도 있었지만 대중 로그인과 무관</text>
+  </g>
+
+  <!-- 연합 레인 사건 -->
+  <g fill="#7c3aed">
+    <circle cx="340" cy="446" r="5" fill="#fff" stroke="#7c3aed" stroke-width="2"/>
+    <text x="340" y="422" text-anchor="middle" font-weight="700">1978</text><text x="340" y="434" text-anchor="middle">Needham–Schroeder</text>
+    <circle cx="457" cy="446" r="5" fill="#fff" stroke="#7c3aed" stroke-width="2"/>
+    <text x="457" y="468" text-anchor="middle" font-weight="700">1988</text><text x="457" y="480" text-anchor="middle">Kerberos v4 (MIT Athena)</text>
+    <circle cx="515" cy="446" r="5" fill="#fff" stroke="#7c3aed" stroke-width="2"/>
+    <text x="515" y="422" text-anchor="middle" font-weight="700">1993</text><text x="515" y="434" text-anchor="middle">Kerberos v5 (RFC 1510)</text>
+    <circle cx="597" cy="446" r="5" fill="#fff" stroke="#7c3aed" stroke-width="2"/>
+    <text x="597" y="468" text-anchor="middle" font-weight="700">2000</text><text x="597" y="480" text-anchor="middle">Active Directory</text>
+    <circle cx="655" cy="446" r="5" fill="#fff" stroke="#7c3aed" stroke-width="2"/>
+    <text x="655" y="422" text-anchor="middle" font-weight="700">2005</text><text x="655" y="434" text-anchor="middle">SAML 2.0</text>
+    <circle cx="737" cy="446" r="5" fill="#fff" stroke="#7c3aed" stroke-width="2"/>
+    <text x="737" y="468" text-anchor="middle" font-weight="700">2012</text><text x="737" y="480" text-anchor="middle">OAuth 2.0</text>
+    <circle cx="760" cy="446" r="5" fill="#fff" stroke="#7c3aed" stroke-width="2"/>
+    <text x="772" y="422" text-anchor="middle" font-weight="700">2014</text><text x="772" y="434" text-anchor="middle">OpenID Connect</text>
+  </g>
+
+  <!-- 현재 비중 -->
+  <g font-size="10.5" fill="#1a1f2b">
+    <text x="893" y="112" text-anchor="start" font-weight="700" fill="#0a4fd6">1위</text>
+    <text x="893" y="232" text-anchor="start" fill="#c2410c">MFA 37%</text>
+    <text x="893" y="352" text-anchor="start" fill="#15803d">잠금해제</text>
+    <text x="893" y="462" text-anchor="start" fill="#7c3aed">SSO</text>
+  </g>
+  <text x="480" y="530" text-anchor="middle" fill="#5c6474" font-size="11.5">레인 굵기 = 2025–26 현재 "1차 로그인"으로 쓰이는 비중(정성적). 패스워드 단독 입력이 여전히 1위 로그인 방식(업무 계정 36%, FIDO 2024), MFA 켠 Entra 사용자 37%(2023).</text>
+</svg>
+<p class="cap">연도는 표준 발행·제품 출시 기준. SecurID만 설계(1985)와 출시 사이가 불명확해 범위로 표시.</p>
+
+<h2>네 개의 레인, 네 개의 이야기</h2>
+
+<p><b>지식 레인은 60년 동안 한 번도 1위를 내주지 않았다.</b> 1961년 MIT CTSS가 시분할 시스템의 파일을 사용자별로 나누려고 패스워드를 붙인 것이 시작이고, 1979년 Morris와 Thompson이 Unix 패스워드 파일이 평문으로 뚫리는 걸 보고 "솔트를 섞어 느린 해시로 저장하라"는 처방을 내놓은 것이 오늘날 bcrypt·Argon2까지 이어지는 서버 저장 방식의 원형이다. 그 뒤 이 레인에서 일어난 일은 방식의 변화가 아니라 <i>정책</i>의 변화다. 2004년 NIST SP 800-63 초판이 구성 규칙과 주기적 변경을 권고했고, 전 세계 기업이 AD 정책으로 이를 복제했다. 13년 뒤인 2017년 800-63-3은 그 규칙들이 사람을 예측 가능한 쪽으로 몰았다는 근거로 철회했고, 2025년 800-63-4는 유출 목록 대조와 길이 중심으로 굳혔다. 방식은 그대로, 사람의 행동을 어떻게 다룰지만 바뀐 것이다.</p>
+
+<p><b>소유 레인은 "비밀을 기기에 옮기는" 레인이다.</b> 1980년대 중반 SecurID가 60초마다 바뀌는 숫자를 키링에 넣었고, 이 아이디어가 2005년 HOTP, 2011년 TOTP로 표준화되어 스마트폰 인증 앱이 됐다. 다른 갈래는 공개키다. 1988년 X.509 인증서가 "이 공개키는 이 사람 것"을 CA가 보증하는 틀을 만들었고, 한국은 1999년 전자서명법으로 이를 공인인증서라는 국가 제도로 올려 2010년대 내내 사실상 모든 금융·공공 로그인에 썼다. 하지만 두 갈래 모두 약점이 같았다. OTP는 사람이 코드를 옮겨 적기 때문에 가짜 사이트에도 옮겨 적고, 공인인증서는 개인키가 패스워드로 잠긴 파일이라 복사해 가면 오프라인에서 그 패스워드를 추측할 수 있었다. 2014년 FIDO U2F가 "서명은 브라우저가 도메인을 보고 하고, 개인키는 칩 밖으로 안 나간다"는 두 조건을 동시에 넣었고, 2019년 WebAuthn이 W3C 표준이 되면서 이 레인의 끝에 패스키(2022)가 놓였다. 같은 해 한국은 공인인증서의 법적 독점 지위를 폐지했다.</p>
+
+<p><b>생체 레인은 짧고, 대부분 다른 레인에 기생한다.</b> 지문·얼굴 자체는 오래된 기술이지만 대중 로그인에 들어온 건 2013년 Touch ID 이후다. 그런데 Touch ID와 Face ID가 하는 일은 서버에 생체를 보내는 게 아니라 <i>기기 안의 키를 꺼내도 되는지</i> 확인하는 것이다. 즉 생체는 소유 레인(패스키·인증서·앱 안의 OTP seed)의 잠금 해제 장치로 쓰이고, 단독 인증 요소로는 NIST가 허용하지 않는다(800-63B-4 §3.2.3). "지문으로 로그인한다"는 말은 거의 항상 "지문으로 기기 키를 풀어서 그 키로 로그인한다"는 뜻이다.</p>
+
+<p><b>연합 레인은 인증 방식이 아니라 인증 결과를 나르는 레인이다.</b> 1978년 Needham–Schroeder가 "신뢰받는 제3자가 세션키를 나눠 준다"는 틀을 제안했고, MIT Project Athena가 1988년 이를 Kerberos로 구현해 캠퍼스 전체의 워크스테이션·파일서버·메일을 한 번의 로그인으로 묶었다. 2000년 Windows 2000의 Active Directory가 Kerberos를 채택하면서 전 세계 사무실의 기본이 됐다. 인터넷 건너편 서비스까지 묶으려면 대칭키 사전 공유 대신 서명이 필요했고, 그래서 2005년 SAML 2.0, 2012년 OAuth 2.0, 2014년 OpenID Connect가 나왔다. 이 레인이 중요한 이유는 하나다. <b>연합은 1차 인증을 한 곳(IdP)으로 모은다.</b> 그 한 곳이 패스워드로 열리면, 연합은 패스워드 하나로 모든 서비스가 열린다는 뜻이 된다.</p>
+
+<h2>왜 맵의 오른쪽 끝에서 아직 패스워드가 가장 두꺼운가</h2>
+<p>세 가지 분모로 보면 같은 그림이 나온다. 서비스 쪽: Tranco 상위 10만 사이트 중 패스키를 지원하는 곳은 11.3%이고(PAM 2026, 2025년 3월 측정), 지원하는 곳도 패스워드 입력란을 없앤 경우는 극소수다. 사용자 쪽: 10개국 1만 명 설문에서 최근 60일 로그인 방식 1위는 업무·SNS·스트리밍 모두 "패스워드만 수동 입력"(36/30/24%)이었다(FIDO Barometer 2024). 패스키는 인지 90%·활성화 75%인데 일상 사용은 49%에 그친다(FIDO 2026). 플랫폼 쪽: 세계 최대 기업 ID 플랫폼인 Entra ID에서 MFA를 켠 월간 활성 사용자는 2023년 기준 37%, 즉 63%는 패스워드 단독이다.</p>
+<p>이유도 맵에 있다. 새 레인은 매번 <i>추가</i>됐지 패스워드를 <i>제거</i>하지 않았다. OTP는 패스워드 위에 얹혔고, 패스키는 패스워드 옆에 놓였고, 연합은 패스워드를 IdP 한 곳에 모았다. 패스워드를 실제로 없애려면 등록·복구 절차까지 바꿔야 하는데(7장), 그 비용을 치른 서비스가 아직 적다.</p>
+
+<h2>내 연구와의 접점</h2>
+<div class="box">이 맵에서 내 논문이 다루는 층은 지식 레인의 <b>정책 변화 구간(2004→2017→2025)</b>이다. 구성 규칙이 사람을 어디로 몰았는지(전이 예측, PentaPassBreaker), 그 결과 서비스별 패스워드가 얼마나 예측 가능해졌는지(PSI)를 측정한다. 나머지 세 레인은 그 층을 없애려는 시도들이고, 각 시도가 패스워드를 <i>어디에 남겨 두는지</i>(Kerberoasting의 서비스 계정, OTP의 1차 요소, IdP의 로그인 화면, 패스키의 복구 경로)가 이 사이트가 추적하는 질문이다.</div>
+
+<h2>참고 표준·문헌 (확인한 것)</h2>
+<ul class="refs">
+  <li>CTSS 1961 — Corbató의 CTSS 시연 1961, 패스워드 도입 공로는 Corbató에게 귀속되나 "최초" 여부는 본인도 유보 (<a href="https://en.wikipedia.org/wiki/Fernando_J._Corbat%C3%B3">Wikipedia</a> 외 2차 출처. <span class="est">추정</span>: 1차 문헌 미확인)</li>
+  <li>Morris &amp; Thompson, <a href="https://www.profsandhu.com/cs6393_s20/p594-morris.pdf">"Password Security: A Case History"</a>, CACM 22(11), 1979-11</li>
+  <li>SecurID — 해시 설계 1985 (RSA Labs Brainard, Bugtraq 2001); 제품 출시 연도는 1차 출처 미확인 → 범위 표기</li>
+  <li>X.509 초판 — ITU-T(CCITT) 1988 Blue Book. <span class="est">추정</span>: 이번 세션에서 원문 미확인</li>
+  <li>전자서명법 제정 1999 / 전부개정 시행 2020-12-10 (공인인증서·공인인증기관 제도 폐지) — <a href="https://www.itwiki.kr/w/%EA%B3%B5%EC%9D%B8%EC%9D%B8%EC%A6%9D%EC%84%9C">IT위키</a>, 보도 다수. 2014년 금융권 의무사용 폐지 포함</li>
+  <li><a href="https://www.rfc-editor.org/rfc/rfc4226">RFC 4226</a> HOTP 2005-12 · <a href="https://www.rfc-editor.org/rfc/rfc6238">RFC 6238</a> TOTP 2011-05</li>
+  <li>FIDO 1.0 (UAF·U2F) 최종 2014-12-09 — <a href="https://www.eweek.com/security/fido-alliance-finalizes-strong-authentication-security-specs/">eWeek</a>; <a href="https://www.w3.org/TR/2019/REC-webauthn-1-20190304/">WebAuthn Level 1</a> W3C Recommendation 2019-03-04; 패스키 공동 발표 2022-05-05 (Apple·Google·Microsoft)</li>
+  <li>Needham &amp; Schroeder, "Using Encryption for Authentication in Large Networks of Computers", CACM 1978 · Kerberos v4 1988 (Project Athena) · <a href="https://www.rfc-editor.org/rfc/rfc1510">RFC 1510</a> 1993-09 · Windows 2000 출시 2000-02</li>
+  <li>SAML 2.0 OASIS 표준 2005-03 · <a href="https://www.rfc-editor.org/rfc/rfc6749">RFC 6749</a> OAuth 2.0 2012-10 · OpenID Connect Core 1.0 2014-02</li>
+  <li>NIST SP 800-63 v1.0 2004-06 · 800-63-3 2017-06 · <a href="https://csrc.nist.gov/pubs/sp/800/63/4/final">800-63-4</a> 2025-07-31 (63B-4 §3.2.3 생체 단독 불허, §2.2 AAL2 피싱 내성 옵션 제공 SHALL)</li>
+  <li>통계 — <a href="https://www.arxiv.org/pdf/2602.15135">Bhardwaj &amp; Sastry, PAM 2026</a> (11.3%) · <a href="https://fidoalliance.org/wp-content/uploads/2024/10/FIDO-Consumer-Barometer-2024-27.08.24.pdf">FIDO Barometer 2024</a> (36/30/24%) · <a href="https://fidoalliance.org/wp-content/uploads/2026/05/The-State-of-Passkeys-Global-Consumer-and-Workforce-Report-1.pdf">FIDO State of Passkeys 2026</a> (90/75/49%) · <a href="https://www.microsoft.com/en-us/security/blog/2023/11/06/automatic-conditional-access-policies-in-microsoft-entra-streamline-identity-protection/">Microsoft 2023-11</a> (MFA 37%)</li>
+</ul>
+
+</main>
+</div>
+<footer class="site">전동호 (David Jeon) · 1차 출처(RFC·W3C/FIDO·NIST SP) 대조 후 확정한 내용만 "확정", 아니면 "추정"으로 표시</footer>
+</body>
+</html>

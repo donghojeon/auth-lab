@@ -12,7 +12,8 @@ SRC, DOCS, STATIC = ROOT / "src", ROOT / "docs", ROOT / "static"
 
 # 커리큘럼 = 목차. (장 제목, [(slug, 페이지 제목), ...]). src/에 파일이 없으면 회색으로만 표시.
 TOC = [
-    ("0. 인증의 기초", [("basics", "식별·인증·인가와 인증 요소"),
+    ("0. 인증의 기초", [("history", "인증의 역사 — 한 장의 맵"),
+                        ("basics", "식별·인증·인가와 인증 요소"),
                         ("threats", "위협 모델 어휘")]),
     ("1. 패스워드", [("password-storage", "서버 저장: 해시·솔트·KDF"),
                      ("password-policy", "정책의 역사와 NIST SP 800-63B"),

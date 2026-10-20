@@ -1,0 +1,104 @@
+<h1>식별·인증·인가와 인증 요소</h1>
+<p class="sub">세 단어를 구분하고, "요소가 몇 개냐"가 아니라 "무엇에 견디느냐"로 강도를 읽는 법</p>
+
+<div class="def"><b>인증(authentication)</b>은 "내가 이 계정의 주인이다"라는 주장을 증거로 검증하는 과정이다. 누구라고 <b>주장</b>하는 것이 식별(identification), 주장을 <b>검증</b>하는 것이 인증, 검증된 주체에게 무엇을 <b>허용</b>할지 정하는 것이 인가(authorization)다. 인증의 강도는 인증기의 강도가 아니라 <b>등록·인증·복구 중 가장 약한 것</b>으로 정해진다.</div>
+
+<svg class="fig" viewBox="0 0 960 330" xmlns="http://www.w3.org/2000/svg" font-family="Apple SD Gothic Neo, Pretendard, Helvetica, Arial, sans-serif" font-size="12.5">
+  <defs>
+    <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1a1f2b"/>
+    </marker>
+  </defs>
+  <!-- 등록 -->
+  <rect x="30" y="60" width="200" height="110" rx="10" fill="#fff" stroke="#c2410c" stroke-width="1.5"/>
+  <text x="130" y="84" text-anchor="middle" font-weight="700" fill="#c2410c">등록 (enrollment)</text>
+  <text x="130" y="106" text-anchor="middle">① 신원 확인 (identity proofing)</text>
+  <text x="130" y="124" text-anchor="middle">"이 사람이 전동호인가"</text>
+  <text x="130" y="146" text-anchor="middle">② 인증기 바인딩</text>
+  <text x="130" y="162" text-anchor="middle" fill="#5c6474" font-size="11">패스워드·키·전화번호를 계정에 묶음</text>
+  <text x="130" y="195" text-anchor="middle" fill="#5c6474" font-size="11">NIST 800-63A</text>
+
+  <line x1="232" y1="115" x2="288" y2="115" stroke="#1a1f2b" stroke-width="1.6" marker-end="url(#ar2)"/>
+
+  <!-- 로그인 3단계 -->
+  <rect x="290" y="40" width="400" height="150" rx="10" fill="#fff" stroke="#0a4fd6" stroke-width="1.5"/>
+  <text x="490" y="62" text-anchor="middle" font-weight="700" fill="#0a4fd6">매 로그인</text>
+  <rect x="305" y="78" width="110" height="56" rx="8" fill="#eef1f5" stroke="#5c6474"/>
+  <text x="360" y="100" text-anchor="middle" font-weight="700">식별</text>
+  <text x="360" y="118" text-anchor="middle" font-size="11">"나는 jdh"</text>
+  <line x1="417" y1="106" x2="433" y2="106" stroke="#1a1f2b" stroke-width="1.6" marker-end="url(#ar2)"/>
+  <rect x="435" y="78" width="110" height="56" rx="8" fill="#dbe7ff" stroke="#0a4fd6"/>
+  <text x="490" y="100" text-anchor="middle" font-weight="700" fill="#0a4fd6">인증</text>
+  <text x="490" y="118" text-anchor="middle" font-size="11">"증명해 봐"</text>
+  <line x1="547" y1="106" x2="563" y2="106" stroke="#1a1f2b" stroke-width="1.6" marker-end="url(#ar2)"/>
+  <rect x="565" y="78" width="110" height="56" rx="8" fill="#eef1f5" stroke="#5c6474"/>
+  <text x="620" y="100" text-anchor="middle" font-weight="700">인가</text>
+  <text x="620" y="118" text-anchor="middle" font-size="11">"뭘 할 수 있나"</text>
+  <text x="360" y="160" text-anchor="middle" fill="#5c6474" font-size="11">identification</text>
+  <text x="490" y="160" text-anchor="middle" fill="#5c6474" font-size="11">authentication · 800-63B</text>
+  <text x="620" y="160" text-anchor="middle" fill="#5c6474" font-size="11">authorization</text>
+
+  <line x1="692" y1="115" x2="748" y2="115" stroke="#1a1f2b" stroke-width="1.6" marker-end="url(#ar2)"/>
+
+  <!-- 세션/연합 -->
+  <rect x="750" y="60" width="180" height="110" rx="10" fill="#fff" stroke="#7c3aed" stroke-width="1.5"/>
+  <text x="840" y="84" text-anchor="middle" font-weight="700" fill="#7c3aed">세션 · 토큰</text>
+  <text x="840" y="106" text-anchor="middle">인증 결과를 들고 다님</text>
+  <text x="840" y="124" text-anchor="middle" font-size="11">쿠키 · TGT · SAML/OIDC 토큰</text>
+  <text x="840" y="146" text-anchor="middle" font-size="11">다른 서비스로 전달 = 연합</text>
+  <text x="840" y="162" text-anchor="middle" fill="#5c6474" font-size="11">NIST 800-63C</text>
+
+  <!-- 복구 루프 -->
+  <path d="M 490 192 L 490 250 L 130 250 L 130 174" fill="none" stroke="#b91c1c" stroke-width="1.6" stroke-dasharray="6 3" marker-end="url(#ar2)"/>
+  <rect x="380" y="236" width="220" height="30" rx="6" fill="#fff" stroke="#b91c1c"/>
+  <text x="490" y="256" text-anchor="middle" fill="#b91c1c" font-weight="700">복구 (recovery) — 인증기를 잃었을 때</text>
+  <text x="490" y="300" text-anchor="middle" fill="#5c6474" font-size="11.5">복구는 "인증 없이 등록을 다시 하는 길". 그래서 복구 경로의 강도가 계정 전체 강도의 상한이 된다.</text>
+</svg>
+<p class="cap">NIST SP 800-63-4는 이 그림을 그대로 세 권으로 나눈다: 63A 등록·신원 확인, 63B 인증·생애주기, 63C 연합.</p>
+
+<h2>세 단어가 자주 섞이는 이유</h2>
+<p>로그인 화면에서는 식별과 인증이 한 화면에 붙어 있다. 아이디 입력이 식별이고, 패스워드 입력이 인증이다. 아이디는 비밀이 아니라 <i>주장</i>일 뿐이라 누구나 남의 아이디를 칠 수 있고, 그래서 아이디만 아는 공격자가 할 수 있는 일(온라인 추측, 비밀번호 찾기 남용)이 위협 모델의 출발점이 된다. 인가는 인증 뒤에 오지만 인증이 보장하지 않는다. "jdh가 맞다"와 "jdh가 이 파일을 열어도 된다"는 별개의 결정이고, Kerberos의 PAC나 OIDC 토큰의 claims처럼 인증 결과에 인가 정보를 <i>실어 보내는</i> 설계가 많아서 둘이 하나처럼 보일 뿐이다.</p>
+
+<h2>인증 요소 세 가지</h2>
+<p>NIST는 인증기(authenticator)를 그것이 증명하는 것으로 분류한다. 패스워드는 "something you know", OTP 기기·암호 키·전화는 "something you have", 생체는 "something you are"다. 중요한 건 800-63B-4가 생체를 <b>단독 요소로 인정하지 않는다</b>는 점이다. 원문은 "Biometrics SHALL only be used as part of multi-factor authentication with a physical authenticator"(§3.2.3)이고, AAL2·AAL3 조항에는 "A biometric characteristic is not recognized as an authenticator by itself"라고 못 박혀 있다. 생체는 그 자체가 비밀이 아니고(지문은 유리컵에 남는다), 유출되면 바꿀 수 없기 때문이다. 그래서 실무에서 생체는 거의 항상 <i>기기 안의 키를 꺼내는 잠금 해제</i>로 쓰인다.</p>
+<table>
+  <tr><th>인증기 (800-63B-4 §3.1)</th><th>요소</th><th>예</th></tr>
+  <tr><td>패스워드 (memorized secret)</td><td>know</td><td>로그인 패스워드, PIN</td></tr>
+  <tr><td>룩업 시크릿 · 대역외(out-of-band)</td><td>have</td><td>복구 코드 목록, SMS·푸시 승인</td></tr>
+  <tr><td>단일 요소 OTP</td><td>have</td><td>TOTP 앱, 하드웨어 OTP 토큰</td></tr>
+  <tr><td>다중 요소 OTP</td><td>have + (know 또는 are)로 활성화</td><td>PIN·지문으로 여는 OTP 토큰</td></tr>
+  <tr><td>단일 요소 암호 인증기</td><td>have</td><td>U2F 보안키(PIN 없음), 클라이언트 인증서</td></tr>
+  <tr><td>다중 요소 암호 인증기</td><td>have + (know 또는 are)로 활성화</td><td>패스키(PIN·생체로 잠금 해제), 스마트카드+PIN</td></tr>
+</table>
+<p class="cap">표 안의 "have + 활성화"가 핵심이다. 패스키 하나가 두 요소로 계산되는 이유 — 기기가 have, 잠금 해제가 know/are.</p>
+
+<h2>요소 수 ≠ 강도</h2>
+<p>"2단계 인증이니 안전하다"는 말은 요소의 <i>개수</i>를 세는 것이다. 그런데 NIST의 강도 척도인 AAL(Authenticator Assurance Level)은 개수가 아니라 <b>공격자가 무엇을 해야 뚫리는가</b>로 정의된다. 원문: "AALs categorize the strength of an authentication transaction… Stronger authentication (i.e., a higher AAL) requires malicious actors to have better capabilities and to expend greater resources"(§2). 같은 두 요소라도 패스워드+SMS OTP는 공격자가 가짜 로그인 페이지 하나로 둘 다 받아 쓸 수 있고(AiTM 피싱), 패스키 하나는 도메인이 다르면 브라우저가 서명을 거부한다. 그래서 800-63B-4는 피싱 내성을 요소 수와 별도의 속성으로 두고, AAL2에서 "Verifiers SHALL offer at least one phishing-resistant authentication option"(§2.2), AAL3에서는 "SHALL have a non-exportable private key and SHALL provide phishing resistance"(§2.3)를 요구한다.</p>
+<table>
+  <tr><th>AAL</th><th>요소</th><th>피싱 내성</th><th>개인키 반출</th><th>전형적 조합</th></tr>
+  <tr><td>AAL1</td><td>1개 이상</td><td class="na">요구 없음</td><td class="na">—</td><td>패스워드 단독, 패스워드+SMS</td></tr>
+  <tr><td>AAL2</td><td>2개</td><td>옵션 제공 SHALL, 사용 권장 SHOULD</td><td class="na">—</td><td>패스워드+TOTP, 패스워드+푸시, 패스키</td></tr>
+  <tr><td>AAL3</td><td>2개</td><td class="ok">SHALL</td><td class="ok">불가 (하드웨어)</td><td>device-bound 패스키·보안키, 스마트카드+PIN</td></tr>
+</table>
+<p class="cap">읽는 법: 패스워드+SMS와 패스워드+TOTP는 "요소 2개"로 같지만 둘 다 AiTM 피싱에 뚫린다. 패스키는 "인증기 1개"지만 AAL2를 채우고, 하드웨어에 묶이면 AAL3까지 간다.</p>
+
+<h2>보안 vs 사용성 — 처음부터 타협이었다</h2>
+<p>1979년 Morris와 Thompson은 Unix 패스워드 설계를 "a compromise between extreme security and ease of use"라고 썼다. 이 타협은 45년째 같은 모양이다. 보안을 올리면(길고 복잡하고 자주 바꾸는 패스워드, 하드웨어 키, 재등록 절차) 사람이 우회하고(재사용, 패턴, 키 분실 시 고객센터), 사용성을 올리면(SMS, 푸시 승인, 이메일 복구) 공격 표면이 커진다. 2017년 이후 NIST가 구성 규칙을 버리고 길이·유출 대조로 간 것, FIDO가 "생체로 잠금 해제 + 기기가 서명"을 고른 것은 모두 이 타협점을 옮긴 결정이지 타협을 없앤 결정이 아니다. 어떤 인증 방식을 평가할 때 "더 안전한가"만 물으면 반쪽이고, "사람이 그걸 쓰면서 무엇을 우회할 것인가"까지 물어야 한다.</p>
+
+<h2>등록과 복구가 가장 약한 고리인 이유</h2>
+<p>위 도식에서 인증은 가운데 한 칸이지만 공격자는 세 칸 어디로든 들어온다. <b>등록</b>이 약하면 애초에 남의 이름으로 계정을 만들거나(신원 확인 실패), 남의 계정에 내 인증기를 묶는다(바인딩 실패 — 패스키 보안이 "서버의 등록 절차 보안"으로 환원되는 이유). <b>복구</b>는 정의상 "인증기 없이 인증기를 다시 받는 길"이라, 복구 경로가 이메일이면 계정 강도는 이메일 패스워드 강도이고, 복구가 고객센터면 상담원의 판단 강도다. 하드웨어 보안키로 AAL3를 만들어 놓고 "키를 잃었으면 SMS로 재설정"을 열어 두면 그 계정은 SMS 수준이다. 그래서 이 사이트는 7장을 따로 둔다.</p>
+
+<h2>흔한 오해</h2>
+<div class="box"><b>"MFA를 켰으니 피싱은 끝."</b> 요소 수와 피싱 내성은 별개다. 코드를 사람이 옮기는 방식(SMS·TOTP)과 승인 버튼(푸시)은 AiTM 프록시가 그대로 중계한다. 2장에서 다룬다.</div>
+<div class="box"><b>"생체가 가장 강한 요소."</b> NIST는 생체를 단독 인증기로 치지 않는다. 생체는 바꿀 수 없고 비밀도 아니다. 생체의 실제 역할은 기기 키의 잠금 해제.</div>
+<div class="box"><b>"로그인됐으면 권한도 확인된 것."</b> 인증은 "누구인가"까지만 답한다. 권한은 인가의 몫이고, 토큰에 실린 그룹·역할 정보가 조작되면(Golden Ticket, 토큰 위조) 인증이 멀쩡해도 인가가 뚫린다.</div>
+
+<h2>내 연구와의 접점</h2>
+<div class="box">이 페이지의 틀로 보면 내 논문은 "know" 요소 하나의 <b>예측 가능성</b>을 측정한 것이다. 요소 수 ≠ 강도라는 명제는 반대 방향으로도 성립한다 — 패스워드 하나(AAL1)라도 추측 비용이 높으면 온라인 추측·오프라인 크래킹에는 강하다. 다만 피싱·재사용에는 길이와 무관하게 약하고, 그 부분은 패스워드의 강도가 아니라 <i>방식</i>의 한계다. PSI가 측정하는 것과 측정하지 않는 것의 경계가 정확히 여기다.</div>
+
+<h2>참고 표준·문헌 (확인한 것)</h2>
+<ul class="refs">
+  <li><a href="https://pages.nist.gov/800-63-4/sp800-63b.html">NIST SP 800-63B-4</a> (2025-07) — §2 AAL 정의 인용, §2.1 AAL1 단일 요소 허용, §2.2 AAL2 피싱 내성 옵션 SHALL offer / SHOULD encourage, §2.3 AAL3 non-exportable + phishing resistance SHALL, §3.1 인증기 유형별 요소, §3.2.3 생체 단독 불허, §3.2.5 phishing resistance (구 verifier impersonation resistance). 인용문은 HTML판에서 직접 확인</li>
+  <li><a href="https://csrc.nist.gov/pubs/sp/800/63/4/final">NIST SP 800-63-4</a> 총론 — 63A(등록·신원 확인) / 63B(인증) / 63C(연합) 분권 구조</li>
+  <li>Morris &amp; Thompson, <a href="https://www.profsandhu.com/cs6393_s20/p594-morris.pdf">"Password Security: A Case History"</a>, CACM 1979 — "compromise between extreme security and ease of use"</li>
+</ul>
