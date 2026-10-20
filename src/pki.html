@@ -1,0 +1,107 @@
+<h1>챌린지-응답과 PKI·인증서</h1>
+<p class="sub">비밀을 보내지 않고 "비밀을 안다"를 증명하는 법. 그리고 "그 공개키가 누구 것인가"를 누가 보증하느냐의 문제</p>
+
+<div class="def"><b>공개키 인증</b>은 서버가 보낸 1회용 난수(챌린지)에 사용자가 개인키로 서명하고, 서버가 공개키로 그 서명을 검증하는 것이다. 개인키는 네트워크에 오르지 않고 서버에도 없다. 그래서 도청·재생·서버 유출이 정의상 성립하지 않는다. 남는 문제는 둘이다 — <b>그 공개키가 정말 이 사람 것인가</b>(신원 바인딩)와 <b>개인키가 어디에 있는가</b>(키 보관). PKI는 첫 문제를 CA 체인으로 풀고, 둘째 문제는 다음 두 페이지(<a href="npki.html">공동인증서</a>, <a href="smartcard.html">스마트카드·SSH</a>)와 <a href="fido2.html">4장</a>의 주제다.</div>
+
+<svg class="fig" viewBox="0 0 960 420" xmlns="http://www.w3.org/2000/svg" font-family="Apple SD Gothic Neo, Pretendard, Helvetica, Arial, sans-serif" font-size="12">
+  <defs>
+    <marker id="ar8" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1a1f2b"/></marker>
+  </defs>
+  <!-- left: challenge-response -->
+  <text x="20" y="28" font-weight="700" font-size="13" fill="#0a4fd6">① 챌린지-응답 — 비밀을 보내지 않는다</text>
+  <rect x="20" y="50" width="120" height="44" rx="8" fill="#fff" stroke="#1a1f2b" stroke-width="1.4"/><text x="80" y="69" text-anchor="middle" font-weight="700">사용자</text><text x="80" y="86" text-anchor="middle" font-size="10.5" fill="#c2410c">개인키 sk (여기만)</text>
+  <rect x="360" y="50" width="120" height="44" rx="8" fill="#fff" stroke="#1a1f2b" stroke-width="1.4"/><text x="420" y="69" text-anchor="middle" font-weight="700">서버</text><text x="420" y="86" text-anchor="middle" font-size="10.5" fill="#15803d">공개키 pk (비밀 아님)</text>
+  <g stroke="#1a1f2b" stroke-width="1.4">
+    <line x1="358" y1="125" x2="144" y2="125" marker-end="url(#ar8)"/>
+    <line x1="144" y1="175" x2="358" y2="175" marker-end="url(#ar8)"/>
+  </g>
+  <text x="250" y="118" text-anchor="middle">챌린지 c = 난수 (매번 다름)</text>
+  <text x="250" y="168" text-anchor="middle">응답 σ = Sign(sk, c ‖ 문맥)</text>
+  <text x="250" y="196" text-anchor="middle" font-size="10.5" fill="#5c6474">"문맥" = 세션 ID·서버 이름·origin — 이게 없으면 중계 공격에 뚫림</text>
+  <rect x="300" y="215" width="240" height="40" rx="8" fill="#eef3ff" stroke="#0a4fd6" stroke-width="1.4"/><text x="420" y="233" text-anchor="middle" fill="#0a4fd6" font-weight="700">Verify(pk, c ‖ 문맥, σ) = 참?</text><text x="420" y="248" text-anchor="middle" font-size="10.5" fill="#5c6474">맞으면 "sk를 가진 쪽이 지금 응답했다"</text>
+  <g fill="#b91c1c" font-size="11">
+    <text x="20" y="290">도청: c·σ만 보임, sk 없음 ✓</text>
+    <text x="20" y="308">재생: 다음 c가 다르니 σ 재사용 불가 ✓</text>
+    <text x="20" y="326">서버 유출: pk뿐, 추측할 비밀 없음 ✓</text>
+    <text x="20" y="344">남는 것: sk 보관 · pk가 누구 것인지 · 가짜 서버로의 중계</text>
+  </g>
+  <!-- right: PKI chain -->
+  <line x1="560" y1="20" x2="560" y2="400" stroke="#e5e7eb"/>
+  <text x="580" y="28" font-weight="700" font-size="13" fill="#7c3aed">② PKI — "pk는 누구 것인가"를 CA 체인이 보증</text>
+  <rect x="640" y="48" width="200" height="40" rx="8" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.6"/><text x="740" y="66" text-anchor="middle" font-weight="700">루트 CA (자기 서명)</text><text x="740" y="81" text-anchor="middle" font-size="10.5" fill="#5c6474">OS·브라우저 신뢰 저장소에 내장</text>
+  <line x1="740" y1="90" x2="740" y2="112" stroke="#7c3aed" stroke-width="1.4" marker-end="url(#ar8)"/><text x="760" y="106" font-size="10.5" fill="#7c3aed">서명</text>
+  <rect x="640" y="116" width="200" height="40" rx="8" fill="#fff" stroke="#7c3aed" stroke-width="1.4"/><text x="740" y="134" text-anchor="middle" font-weight="700">중간 CA</text><text x="740" y="149" text-anchor="middle" font-size="10.5" fill="#5c6474">발급 업무 · 루트 키는 오프라인</text>
+  <line x1="740" y1="158" x2="740" y2="180" stroke="#7c3aed" stroke-width="1.4" marker-end="url(#ar8)"/><text x="760" y="174" font-size="10.5" fill="#7c3aed">서명</text>
+  <rect x="600" y="184" width="280" height="92" rx="8" fill="#fff" stroke="#1a1f2b" stroke-width="1.6"/>
+  <text x="740" y="203" text-anchor="middle" font-weight="700">최종 인증서 (X.509 v3)</text>
+  <g font-size="10.5" fill="#1a1f2b"><text x="612" y="221">Subject: CN=전동호 · Issuer: 중간 CA</text><text x="612" y="236">SubjectPublicKeyInfo: pk</text><text x="612" y="251">Validity · KeyUsage · ExtendedKeyUsage(clientAuth)</text><text x="612" y="266">Signature: 중간 CA의 서명</text></g>
+  <text x="740" y="300" text-anchor="middle" font-size="11">검증자: 루트까지 서명 사슬 확인 + 유효기간 + 폐지 여부(CRL·OCSP) + 용도</text>
+  <g fill="#b91c1c" font-size="11">
+    <text x="580" y="336">CA 시스템 장악 = 누구 명의든 발급 가능 (DigiNotar 2011)</text>
+    <text x="580" y="354">발급 절차가 느슨하면 "pk = 전동호"가 거짓 (신원 확인 = 등록 문제)</text>
+    <text x="580" y="372">폐지 전파 지연 = 훔친 키가 유효기간 내내 통함</text>
+  </g>
+  <text x="20" y="400" fill="#5c6474" font-size="11">①만 있으면 "같은 sk가 응답했다"까지, ②가 붙으면 "전동호가 응답했다"까지. FIDO는 사용자 신원에 ①만 쓰고 ②를 서비스 가입 절차로 대체한다.</text>
+</svg>
+<p class="cap">왼쪽은 모든 공개키 인증(TLS 클라이언트 인증서·SSH·FIDO·공동인증서)의 공통 골격이고, 오른쪽은 그중 PKI 계열만 갖는 부분이다. 둘을 분리해서 보면 "패스키는 PKI인가"(사용자 신원에 대해서는 아니다 — ①만. 기기 모델 증명인 attestation에는 X.509 체인이 쓰일 수 있음), "공동인증서는 왜 피싱에 약한가"(①의 "문맥"에 도메인이 없는 것으로 알려져서)가 한눈에 보인다.</p>
+
+<h2>왜 서명이 "비밀을 안다"의 증명이 되나</h2>
+<p>패스워드는 "비밀을 보여 줘서" 증명한다. 그래서 보여 주는 길(네트워크·가짜 사이트)과 받아 두는 곳(서버 DB)이 전부 공격 표면이다. 서명은 "비밀로 만든 결과물을 보여 줘서" 증명한다. 결과물(서명)에서 비밀(개인키)을 되짚을 수 없고, 결과물은 챌린지마다 달라 재사용이 안 되며, 검증에 필요한 공개키는 비밀이 아니다. 즉 0장 위협 표의 도청·재생·오프라인 추측·온라인 추측 네 줄이 <i>정의상</i> 사라진다. 대칭키로도 "비밀을 보내지 않는 증명"은 된다(Kerberos는 타임스탬프 암호화, HOTP/TOTP는 카운터·시각을 챌린지 대신 쓰고, 순수 챌린지-응답형 OTP는 OCRA, RFC 6287). 차이는 서버가 같은 비밀을 들고 있느냐다 — 대칭이면 서버 유출이 곧 비밀 유출이고, 비대칭이면 서버엔 공개키뿐이다.</p>
+<p>단, 챌린지만 서명하면 <b>중계 공격</b>에 뚫린다. 가짜 서버가 진짜 서버에서 받은 챌린지를 사용자에게 그대로 넘기고 서명을 받아 되돌려 주면 된다. 그래서 실제 프로토콜은 챌린지에 <i>문맥</i>을 묶는다: TLS 1.3 클라이언트 인증은 그 시점까지의 핸드셰이크 해시(transcript)에 서명하고, SSH는 세션 ID를 서명 대상에 넣고, WebAuthn은 origin과 RP ID 해시를 넣는다. 공동인증서 로그인은 서명 대상에 접속 도메인이 들어가지 않는 것으로 알려져 있고, 그것이 피싱에 약했던 기술적 이유로 설명된다(<span class="est">추정</span>: 로그인 메시지 형식은 보안 플러그인 제품마다 달랐고 규격 원문 미대조).</p>
+
+<h2>X.509 인증서: 공개키에 이름을 붙인 서명된 문서</h2>
+<p>인증서는 "이 공개키 pk는 이 주체(Subject)의 것이며, 이 기간 동안, 이 용도로 유효하다"고 발급자(Issuer)가 서명한 구조체다. RFC 5280이 v3 프로필을 정한다. 인증 관점에서 봐야 할 필드는 넷이다.</p>
+<table>
+  <tr><th>필드</th><th>뜻</th><th>인증에서의 역할</th></tr>
+  <tr><td>Subject · SubjectAltName</td><td>주체 이름 (CN, O, 이메일, DNS 이름)</td><td>"pk = 누구". 공동인증서는 여기에 VID(주민번호 해시)를 더해 실명과 묶는다</td></tr>
+  <tr><td>SubjectPublicKeyInfo</td><td>알고리즘 + 공개키</td><td>서명 검증에 쓰는 pk</td></tr>
+  <tr><td>Validity · 폐지(CRL/OCSP)</td><td>유효기간, 폐지 목록·상태 조회</td><td>"지금도 유효한가". 폐지 전파가 느리면 훔친 키가 통함</td></tr>
+  <tr><td>KeyUsage · ExtendedKeyUsage</td><td>digitalSignature, nonRepudiation(contentCommitment), clientAuth(1.3.6.1.5.5.7.3.2) 등</td><td>"로그인용인가 문서 서명용인가". 공동인증서는 로그인과 문서 서명을 한 서명키로 — 다음 페이지에서 이 문제를 다룸</td></tr>
+</table>
+<p><b>체인 검증</b>(RFC 5280 §6)은 최종 인증서 → 중간 CA → 루트까지 각 단계의 서명·이름 연결·유효기간·폐지·제약(path length, name constraints)을 확인하는 절차다. 루트는 자기 서명이라 검증 대상이 아니라 <i>신뢰의 출발점</i>이고, OS·브라우저·앱의 신뢰 저장소에 들어 있다. 즉 PKI의 보안은 결국 "누가 신뢰 저장소에 루트를 넣는가"와 "CA가 발급 전에 신원을 어떻게 확인하는가"로 환원된다 — 둘 다 암호가 아니라 절차다.</p>
+
+<h2>어디에 쓰이나</h2>
+<table>
+  <tr><th>용도</th><th>프로토콜</th><th>서명 대상 (문맥)</th><th>키 보관</th><th>신원 보증</th></tr>
+  <tr><td>웹 서버 인증</td><td>TLS 서버 인증서</td><td>핸드셰이크 transcript (TLS 1.3. 1.2 이하는 키교환 파라미터 서명 또는 RSA 복호화)</td><td>서버 파일·HSM</td><td>공개 CA(도메인 검증)</td></tr>
+  <tr><td>사용자 → 웹/VPN</td><td>TLS 클라이언트 인증서 (mTLS)</td><td>핸드셰이크 transcript (RFC 8446 §4.4.3)</td><td>브라우저·OS 키 저장소, 스마트카드</td><td>기업 사설 CA</td></tr>
+  <tr><td>사용자 → Wi-Fi</td><td>EAP-TLS (802.1X)</td><td>TLS와 동일</td><td>단말 인증서</td><td>기업 사설 CA</td></tr>
+  <tr><td>사용자 → 서버 쉘</td><td>SSH publickey (RFC 4252 §7)</td><td>세션 ID ‖ 요청 필드</td><td>파일(<code>~/.ssh/id_*</code>) · 에이전트 · FIDO 키</td><td>authorized_keys 등록(관리자·본인) 또는 SSH CA. 서버 쪽은 TOFU</td></tr>
+  <tr><td>사용자 → Windows 도메인</td><td>Kerberos PKINIT · 스마트카드 로그온</td><td>AS-REQ 서명</td><td>PIV/CAC 카드, TPM</td><td>기업 CA</td></tr>
+  <tr><td>사용자 → 금융·정부(한국)</td><td>공동인증서 (NPKI)</td><td>서버가 준 데이터 (도메인 미포함으로 알려짐, <span class="est">추정</span>)</td><td>파일(signPri.key), USB, 클라우드</td><td>공인 CA + 실명 확인</td></tr>
+  <tr><td>사용자 → 웹</td><td>FIDO2/WebAuthn</td><td>authenticatorData ‖ clientDataHash (origin 포함)</td><td>보안 칩, 플랫폼 키체인</td><td>CA 없음 (서비스 등록 절차)</td></tr>
+</table>
+<p>표의 마지막 두 줄을 비교하면 FIDO는 "PKI에서 CA를 뺀 것"이다. 서명 대상에 origin을 넣어 중계를 막는 대신 신원 보증은 포기했다. 반대로 공동인증서는 신원 보증을 CA·실명 확인으로 얻는 대신 서명 대상에 도메인이 없다. 이것이 <a href="passkeys-vs-npki.html">4장 비교표</a>의 기술적 뿌리다.</p>
+
+<h2>NIST 63B-4에서의 위치</h2>
+<p>63B-4 §3.1.6–3.1.7은 공개키 방식을 <b>cryptographic authenticator</b>로 묶는다. 정의 자체가 챌린지-응답이다: "Single-factor cryptographic verifiers generate a challenge nonce, send it to the corresponding authenticator, and use the authenticator output to verify possession of the authenticator." 활성화에 두 번째 요소(PIN·생체)가 붙으면 multi-factor다. 키 보관은 별도 축이다 — 비반출 키는 "SHALL be stored in an isolated execution environment that is protected by hardware or in a separate processor"(§3.1.6.1). AAL3는 "SHALL have a non-exportable private key and SHALL provide phishing resistance"(§2.3.2)이므로, 파일형 키(SSH 개인키 파일, 공동인증서)는 AAL3에 못 들어간다. 즉 같은 "공개키 인증"이라도 키 보관 방식이 보증 수준을 가른다 — 다음 두 페이지의 축이 이것이다.</p>
+
+<h2>위협 모델: 공개키 인증이 지키는 것과 못 지키는 것</h2>
+<table>
+  <tr><th>공격</th><th>챌린지-응답 (①)</th><th>+ PKI 신원 보증 (②)</th><th>비고</th></tr>
+  <tr><td>도청 · 재생</td><td class="ok">막음</td><td class="ok">막음</td><td>서명은 1회용, 개인키 비전송</td></tr>
+  <tr><td>온라인·오프라인 추측</td><td class="ok">막음</td><td class="ok">막음</td><td>서버에 pk만. 단, 개인키 <i>파일</i>이 패스워드로 암호화돼 있으면 파일 탈취 후 그 패스워드 추측은 남음</td></tr>
+  <tr><td>피싱 · AiTM (중계)</td><td class="na">문맥에 달림</td><td class="na">문맥에 달림</td><td>서명 대상에 origin·transcript가 있으면 막고(TLS·SSH·FIDO), 없으면 뚫림(공동인증서 — 추정)</td></tr>
+  <tr><td>서버 DB 유출</td><td class="ok">막음</td><td class="ok">막음</td><td>pk·인증서뿐</td></tr>
+  <tr><td>단말 감염 · 키 추출</td><td class="no">키 보관 방식에 달림</td><td class="no">같음</td><td>파일 키는 복사되고, 칩 키는 사용만 됨. 사용은 어느 쪽도 못 막음</td></tr>
+  <tr><td>무단 바인딩 (가짜 신원으로 발급)</td><td class="no">해당 없음 (신원 개념 없음)</td><td class="na">CA 발급 절차 강도</td><td>CA가 신원 확인을 소홀히 하면 "pk = 전동호"가 거짓</td></tr>
+  <tr><td>CA 키 유출 · 부정 발급</td><td class="ok">해당 없음</td><td class="no">전체 붕괴</td><td>DigiNotar 2011: 공격자가 CA 서버 전체를 장악해 *.google.com 등 부정 인증서 최소 531장 발급(Fox-IT 최종보고서, 전수 아님), 2011-09 파산</td></tr>
+  <tr><td>폐지 지연</td><td class="na">서버가 pk 삭제하면 끝</td><td class="no">CRL/OCSP 전파까지 유효</td><td>FIDO는 서비스별 등록이라 폐지가 곧 삭제. PKI는 "모든 검증자"에게 알려야 함</td></tr>
+</table>
+
+<h2>흔한 오해</h2>
+<div class="box"><b>"인증서 = 신원."</b> 인증서는 "CA가 이 pk를 이 이름과 묶었다"는 CA의 주장이다. CA가 확인을 안 했으면 이름은 거짓이고, 키가 복사됐으면 이름은 맞아도 사용자는 남이다. 신원은 발급 절차 + 키 보관 두 조건이 모두 서야 성립한다.</div>
+<div class="box"><b>"공개키 인증이면 피싱은 끝."</b> 아니다. 서명 대상에 상대 서버의 정체(origin·transcript)가 들어갈 때만 중계를 막는다. 난수만 서명하면 가짜 서버가 챌린지를 중계해 그대로 통과한다.</div>
+<div class="box"><b>"PKI는 복잡해서 실패했다."</b> 웹 서버 인증(HTTPS)으로는 지구 전체에서 성공했다. 실패한 건 <i>사용자</i> 인증서다 — 발급·갱신·분실·폐지를 사람마다 해야 하고, 키를 파일로 들고 다니게 했기 때문이다. FIDO는 그 관리 문제를 "서비스마다 자동 생성, CA 없음"으로 우회한 설계다.</div>
+<div class="box"><b>"암호화와 서명은 같은 키 연산."</b> RSA에서 수학이 비슷해 생긴 오해. 이 장의 인증 방식은 모두 서명을 쓰지만, 복호화로 증명하는 방식도 있다(SSH-1, TLS 1.2 RSA 키 전송). 서명키와 암호화키를 나누는 이유(공동인증서도 signCert/kmCert 둘)는 둘이다 — 암호화키는 분실 대비 백업·위탁이 필요하지만 부인방지 서명키는 본인만 가져야 하고, 한 RSA 키를 겸용하면 복호화 요청이 곧 서명 오라클이 되기 때문.</div>
+
+<h2>내 연구와의 접점</h2>
+<div class="box">공개키 인증이 "사람이 고른 비밀"을 없애는 건 ①의 구조 덕분인데, 실제 배포에서는 그 비밀이 <i>한 칸 옆으로</i> 옮겨 간다 — 개인키 파일을 잠그는 패스워드(공동인증서, SSH 키 passphrase), 스마트카드 PIN, TPM 키의 Windows Hello PIN. 위협 표의 "추측" 줄이 "막음"인 것은 서버 측 이야기고, 파일이 유출되면 PentaPassBreaker·PSI가 다루는 오프라인 추측이 그대로 돌아온다. 그래서 공개키 인증의 실제 강도를 재려면 "키가 파일인가 칩인가"와 "그 파일을 잠근 패스워드의 분포"를 같이 봐야 하고, 후자는 내 데이터로 잴 수 있는 양이다. 한국의 2010년대 공동인증서 사고가 그 측정의 자연 실험이다.</div>
+
+<h2>참고 표준·문헌 (확인한 것)</h2>
+<ul class="refs">
+  <li><a href="https://www.rfc-editor.org/rfc/rfc5280">RFC 5280</a> (2008-05) X.509 v3 인증서·CRL 프로필 — §4.1.2 Issuer·Subject·Validity·SubjectPublicKeyInfo, §4.2.1.3 KeyUsage("recent editions of X.509 have renamed the nonRepudiation bit to contentCommitment"), §4.2.1.12 id-kp-clientAuth = 1.3.6.1.5.5.7.3.2, §6 경로 검증 (원문 대조). <a href="https://www.rfc-editor.org/rfc/rfc6960">RFC 6960</a> OCSP (2013-06)</li>
+  <li><a href="https://www.rfc-editor.org/rfc/rfc8446">RFC 8446</a> TLS 1.3 §4.4.3 CertificateVerify — "Transcript-Hash(Handshake Context, Certificate)"에 서명 (원문 대조). <a href="https://www.rfc-editor.org/rfc/rfc4252">RFC 4252</a> §7 publickey — 서명 대상 첫 항목이 session identifier, <a href="https://www.rfc-editor.org/rfc/rfc4253">RFC 4253</a> §7.2 세션 ID = 첫 키 교환의 exchange hash H (원문 대조)</li>
+  <li><a href="https://pages.nist.gov/800-63-4/sp800-63b.html">NIST SP 800-63B-4</a> §3.1.6 / §3.1.6.1 / §3.1.6.2 / §3.1.7, §2.3.2 AAL3 (원문 대조)</li>
+  <li>WebAuthn L3 §6.3.3 — 서명 대상 authenticatorData ‖ hash(clientDataJSON) (4장에서 대조). DigiNotar 2011 — Fox-IT 보고서 "Black Tulip" 기준, 발급 건수는 <span class="est">추정</span></li>
+</ul>

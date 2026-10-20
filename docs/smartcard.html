@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>클라이언트 인증서·스마트카드·SSH 키 — 사용자 인증 연구소</title>
+<link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+<header class="site">
+  <a class="brand" href="index.html">사용자 인증 연구소</a>
+  <span class="tag">패스워드 이후의 인증을 기초부터 — 공부 기록</span>
+</header>
+<div class="layout">
+<nav class="toc">
+  <ul>
+<li class="chap">0. 인증의 기초<ul>
+<li><a href="history.html">인증의 역사 — 한 장의 맵</a></li>
+<li><a href="basics.html">식별·인증·인가와 인증 요소</a></li>
+<li><a href="threats.html">위협 모델 어휘</a></li>
+</ul></li>
+<li class="chap">1. 패스워드<ul>
+<li><a href="password-storage.html">서버 저장: 해시·솔트·KDF</a></li>
+<li><a href="password-guessing.html">추측 모델 계보와 강도 추정</a></li>
+<li><a href="password-policy.html">정책의 역사와 NIST SP 800-63B</a></li>
+<li><a href="password-managers.html">패스워드 관리자</a></li>
+</ul></li>
+<li class="chap">2. OTP와 MFA<ul>
+<li class="todo">HOTP·TOTP와 공유 비밀</li>
+<li class="todo">푸시·SMS·MFA 피로, 그리고 MFA가 못 막는 것</li>
+</ul></li>
+<li class="chap">3. 공개키 기반 인증<ul>
+<li><a href="pki.html">챌린지-응답과 PKI·인증서</a></li>
+<li><a href="npki.html">공동인증서(구 공인인증서)</a></li>
+<li class="cur"><a href="smartcard.html">클라이언트 인증서·스마트카드·SSH 키</a></li>
+</ul></li>
+<li class="chap">4. FIDO와 패스키<ul>
+<li><a href="fido2.html">U2F → FIDO2: WebAuthn + CTAP</a></li>
+<li><a href="passkeys.html">패스키: synced vs device-bound</a></li>
+<li><a href="passkeys-vs-npki.html">패스키 vs 공동인증서</a></li>
+</ul></li>
+<li class="chap">5. 연합 인증과 SSO<ul>
+<li class="todo">IdP와 SSO 개념</li>
+<li><a href="kerberos.html">Kerberos 인증 흐름</a></li>
+<li class="todo">SAML 2.0</li>
+<li class="todo">OAuth 2.0 vs OIDC</li>
+<li class="todo">토큰·세션·쿠키</li>
+<li class="todo">Entra ID·Okta와 AD</li>
+</ul></li>
+<li class="chap">6. 생체 인증<ul>
+<li class="todo">로컬 매칭 vs 서버 매칭, FAR·FRR</li>
+</ul></li>
+<li class="chap">7. 계정 등록·복구<ul>
+<li class="todo">가장 약한 고리</li>
+</ul></li>
+<li class="chap">8. 실전 공격 사례<ul>
+<li class="todo">Kerberoasting부터 세션 탈취까지</li>
+</ul></li>
+<li class="chap">9. 실습 랩<ul>
+<li class="todo">WebAuthn 등록·인증 데모</li>
+<li class="todo">TOTP 생성기</li>
+<li class="todo">방식별 "서버에 남는 것" 비교</li>
+</ul></li>
+  </ul>
+</nav>
+<main class="wrap">
+<h1>클라이언트 인증서·스마트카드·SSH 키</h1>
+<p class="sub">같은 공개키 인증인데 키가 파일에 있느냐 칩에 있느냐로 위협 모델이 갈린다. 그리고 셋 모두 "키를 나눠 주고 거두는 일"에서 무너진다</p>
+
+<div class="def"><b>클라이언트 인증서</b>(mTLS·EAP-TLS)는 사용자가 TLS 핸드셰이크 안에서 인증서로 서명해 서버에 자신을 증명하는 방식, <b>스마트카드</b>(PIV·CAC)는 그 개인키를 꺼낼 수 없는 칩에 넣고 PIN으로 활성화하는 방식, <b>SSH 키</b>는 CA 없이 공개키를 서버의 허용 목록에 직접 넣는 방식이다. 셋의 공통 골격은 <a href="pki.html">앞 페이지</a>의 챌린지-응답이고, 차이는 두 축 — <b>키가 어디 있나</b>(파일 / 칩)와 <b>공개키를 누가 보증하나</b>(CA / 허용 목록 / 아무도).</div>
+
+<svg class="fig" viewBox="0 0 960 400" xmlns="http://www.w3.org/2000/svg" font-family="Apple SD Gothic Neo, Pretendard, Helvetica, Arial, sans-serif" font-size="12">
+  <!-- 2x2 grid: x = key location (file / chip), y = trust (CA / allowlist) -->
+  <text x="480" y="24" text-anchor="middle" font-weight="700" font-size="13">두 축으로 놓은 공개키 인증 방식</text>
+  <line x1="150" y1="60" x2="150" y2="360" stroke="#1a1f2b" stroke-width="1.2"/>
+  <line x1="150" y1="360" x2="920" y2="360" stroke="#1a1f2b" stroke-width="1.2"/>
+  <text x="535" y="390" text-anchor="middle" font-weight="700">키 보관 →</text>
+  <text x="340" y="378" text-anchor="middle" fill="#b91c1c">파일 (복사 가능)</text><text x="730" y="378" text-anchor="middle" fill="#15803d">칩 (복사 불가, 사용만)</text>
+  <text x="30" y="200" font-weight="700" transform="rotate(-90 30 200)" text-anchor="middle">공개키 보증 ↑</text>
+  <text x="100" y="120" text-anchor="middle" fill="#7c3aed" font-size="11.5">CA 체인</text><text x="100" y="134" text-anchor="middle" fill="#7c3aed" font-size="10.5">+ 신원 확인</text>
+  <text x="100" y="300" text-anchor="middle" fill="#5c6474" font-size="11.5">허용 목록</text><text x="100" y="314" text-anchor="middle" fill="#5c6474" font-size="10.5">(authorized_keys · DB)</text>
+  <line x1="535" y1="60" x2="535" y2="360" stroke="#e5e7eb" stroke-dasharray="4 3"/><line x1="150" y1="210" x2="920" y2="210" stroke="#e5e7eb" stroke-dasharray="4 3"/>
+  <!-- quadrant: file + CA -->
+  <rect x="170" y="75" width="340" height="120" rx="10" fill="#fff1f2" stroke="#b91c1c" stroke-width="1.2"/>
+  <text x="340" y="96" text-anchor="middle" font-weight="700">소프트 인증서</text>
+  <g font-size="11" fill="#1a1f2b"><text x="185" y="116">· 공동인증서 (signPri.key 파일, 패스워드)</text><text x="185" y="132">· 브라우저·OS 저장소의 클라이언트 인증서 (.p12)</text><text x="185" y="148">· OpenSSH 인증서 (SSH CA가 서명한 키, 파일)</text></g>
+  <text x="185" y="172" font-size="10.5" fill="#b91c1c">파일 탈취 → 잠금 패스워드 오프라인 추측. 63B-4 AAL1~2</text>
+  <!-- quadrant: chip + CA -->
+  <rect x="555" y="75" width="345" height="120" rx="10" fill="#ecfdf5" stroke="#15803d" stroke-width="1.2"/>
+  <text x="727" y="96" text-anchor="middle" font-weight="700">스마트카드 · 하드웨어 인증서</text>
+  <g font-size="11" fill="#1a1f2b"><text x="570" y="116">· PIV (FIPS 201) · CAC (미 국방부) — 카드 + PIN</text><text x="570" y="132">· Windows Hello for Business certificate trust (TPM 키)</text><text x="570" y="148">· 공동인증서를 보안토큰(HSM USB)에 넣은 경우</text></g>
+  <text x="570" y="172" font-size="10.5" fill="#15803d">키 비반출 + PIN = 다중 요소 암호 인증기. AAL3 가능</text>
+  <!-- quadrant: file + allowlist -->
+  <rect x="170" y="225" width="340" height="120" rx="10" fill="#fff" stroke="#b91c1c" stroke-width="1.2" stroke-dasharray="5 3"/>
+  <text x="340" y="246" text-anchor="middle" font-weight="700">SSH 키 파일</text>
+  <g font-size="11" fill="#1a1f2b"><text x="185" y="266">· ~/.ssh/id_ed25519 (+ passphrase, 선택)</text><text x="185" y="282">· 서버 authorized_keys에 공개키 직접 등록</text><text x="185" y="298">· 호스트 키는 TOFU (처음 본 키를 믿음)</text></g>
+  <text x="185" y="322" font-size="10.5" fill="#b91c1c">passphrase 없는 키 = 파일이 곧 신원. 배포·회수는 사람 손</text>
+  <!-- quadrant: chip + allowlist -->
+  <rect x="555" y="225" width="345" height="120" rx="10" fill="#fff" stroke="#15803d" stroke-width="1.2" stroke-dasharray="5 3"/>
+  <text x="727" y="246" text-anchor="middle" font-weight="700">하드웨어 키 + 허용 목록</text>
+  <g font-size="11" fill="#1a1f2b"><text x="570" y="266">· OpenSSH FIDO 키 (ed25519-sk, 8.2+)</text><text x="570" y="282">· PIV 카드 안의 SSH 키 (PKCS#11)</text><text x="570" y="298">· FIDO2/패스키 — 4장 (서비스별 공개키 목록)</text></g>
+  <text x="570" y="322" font-size="10.5" fill="#15803d">파일 탈취가 성립 안 함. 신원 보증은 등록 절차에 위임</text>
+</svg>
+<p class="cap">위쪽 두 칸은 PKI(앞 페이지 ②가 있음), 아래 두 칸은 허용 목록(① 만). 왼쪽은 키가 복사되는 세계, 오른쪽은 사용만 되는 세계. 한국의 공동인증서는 왼쪽 위에서 출발해 보안토큰이면 오른쪽 위로 간다. FIDO는 오른쪽 아래. 각 칸의 위협 모델이 다르니 "공개키 인증"이라는 한 단어로 묶으면 비교가 안 된다.</p>
+
+<h2>클라이언트 인증서: TLS 핸드셰이크 안의 서명</h2>
+<p>서버가 CertificateRequest를 보내면 클라이언트는 인증서와 함께 CertificateVerify — 지금까지의 핸드셰이크 전체 해시(transcript)에 대한 서명 — 를 보낸다(RFC 8446 §4.4.3). 서명 대상에 핸드셰이크가 통째로 들어가므로 중계 공격이 성립하지 않는다 — 가짜 서버는 자기 핸드셰이크에 대한 서명을 진짜 서버에 가져가 쓸 수 없다. 이것이 <a href="pki.html">앞 페이지</a>에서 말한 "문맥"의 교과서적 구현이고, 63B-4 §3.2.5는 이를 피싱 내성의 예로 직접 든다: "Personal identity verification (PIV) and common access card (CAC) cards, which use client-authenticated TLS, provide phishing resistance through channel binding." 같은 구조가 Wi-Fi 802.1X의 EAP-TLS, VPN, 기업 내부 API의 mTLS에 쓰인다.</p>
+<p>그런데 사용자용 클라이언트 인증서는 웹에서 거의 사라졌다. 이유는 암호가 아니라 운용이다: 브라우저마다 다른 가져오기 UI, 기기마다 설치·갱신, 분실 시 폐지 전파, 그리고 키가 OS 키 저장소에 파일로 있어 단말 감염에 그대로 노출된다는 점. 기업은 이 문제를 "기기 인증서를 MDM이 자동 배포"로 풀었고(사용자가 아니라 <i>기기</i>를 인증), 사용자 인증은 IdP + MFA/패스키로 넘겼다. 즉 클라이언트 인증서는 사람 인증에서 기기 인증으로 역할이 옮겨 갔다.</p>
+
+<h2>스마트카드: 키를 꺼낼 수 없게 만들기</h2>
+<p>미국 연방 PIV(FIPS 201-3)와 국방부 CAC는 개인키를 카드 안에서 만들고 꺼내지 못하게 한 설계다. FIPS 201-3 §4.2.2.1: "This key SHALL be generated on the PIV Card. The PIV Card SHALL NOT permit exportation of the PIV authentication key." PIN은 카드를 <i>활성화</i>하는 지식 요소이고, 활성화된 카드는 연산마다 PIN을 다시 묻지 않아도 된다(같은 조항, MAY). 일반 비접촉(NFC) 인터페이스로는 인증 키 연산을 막고, 보안 채널(virtual contact interface)로만 허용할 수 있다. 그래서 63B-4의 <b>multi-factor cryptographic authenticator</b>(소유 = 카드, 지식 = PIN)이고 AAL3의 "non-exportable private key" 조건을 만족한다. 카드를 훔쳐도 PIN 시도 제한에 걸리고(<span class="est">추정</span>: 구체 횟수는 카드·기관 정책별), PIN을 알아도 카드가 없으면 소용없다. FIDO 보안키도 같은 원리(비반출 키 + 로컬 활성화)를 쓴다 — YubiKey 한 개에 PIV와 FIDO2가 같은 물건 위의 다른 프로토콜로 들어 있다. 차이는 셋이다: PKI(CA 체인·인증서) 유무, 서비스별 키 여부, 그리고 서명이 무엇에 묶이나(TLS 채널 vs origin).</p>
+<p>Windows Hello for Business는 같은 원리를 카드 대신 노트북의 TPM으로 구현한다. 키는 TPM이 있으면 TPM 안에서(없으면 소프트웨어 키로 — MS 문서: "device-bound key (hardware or software)") 생성되고 PIN·생체는 그 키를 여는 로컬 잠금 해제다. AAL3 조건(비반출)은 TPM 키일 때만 선다. Entra ID에는 언제나 이 키로 인증하고("always uses the key, not a certificate"), 온프레미스 AD 인증 방식만 세 가지 신뢰 유형으로 갈린다 — <b>cloud Kerberos trust</b>(Entra가 TGT를 발급, MS 권장), <b>key trust</b>(장치 바인딩 키로 직접), <b>certificate trust</b>(사내 CA가 사용자에게 인증서 발급, 앞 칸의 "하드웨어 인증서"). Windows Hello는 웹 사이트에 대해서는 FIDO2/WebAuthn 플랫폼 인증기로도 동작하지만, Entra·AD 로그인 자체는 FIDO2 프로토콜이 아니다.</p>
+<p>스마트카드의 약점은 카드가 아니라 <b>발급 창구</b>다. 카드를 누구에게 주는지(신원 확인), 분실 신고와 폐지가 얼마나 빨리 전파되는지, PIN 초기화 절차가 사회공학에 얼마나 약한지. 0장의 "등록·복구가 가장 약한 고리"가 여기서도 그대로다.</p>
+
+<h2>SSH 키: CA 없는 공개키 인증의 성공 사례</h2>
+<p>SSH publickey 인증(RFC 4252 §7)은 클라이언트가 (세션 ID ‖ 사용자명 ‖ 서비스 ‖ 공개키) 를 개인키로 서명해 보내고, 서버는 그 공개키가 <code>authorized_keys</code>에 있는지 보고 서명을 검증한다. 세션 ID가 서명 대상에 들어가므로 중계가 안 된다. CA가 없다 — 공개키를 허용 목록에 누가 넣느냐가 전부고, 그래서 FIDO의 "서비스별 공개키 등록"과 구조가 같다. 호스트(서버) 쪽 인증은 처음 접속 때 본 키를 믿는 TOFU(trust on first use)라, 첫 접속(또는 키 변경 경고를 무시할 때) 서버 사칭을 막지 못한다. 그때도 사용자 키 인증 자체는 세션 ID가 달라 중계되지 않지만, 가짜 서버가 세션 내용을 보고 포워딩된 에이전트를 악용할 수 있다.</p>
+<p>잘 되는 이유와 안 되는 이유가 같다. 키 생성·등록이 명령 한 줄이라 개발자 세계 전체가 쓰지만, 그 결과 <b>키가 어디 몇 개 있는지 아무도 모른다</b>. 퇴사자의 키가 서버에 남고, passphrase 없는 개인키가 노트북·CI 서버·도커 이미지에 복사돼 있고, 에이전트 포워딩은 침해된 중간 서버에서 내 키를 빌려 쓰게 한다. 2015년 Ben Cox가 GitHub 사용자 공개 SSH 키 약 137만 개를 전수 조사했을 때, 256·512비트 RSA 키가 남아 있었고 2006~2008년 Debian OpenSSL 난수 버그(키 공간 약 3.2만 개)로 만든 키가 대량으로 — 일부는 큰 프로젝트의 커밋 권한과 함께 — 살아 있었다. GitHub는 신고 후 2015년 5~6월에 해당 키를 일괄 폐기했다. "아무도 키를 추적하지 않는다"의 공개 증거다. 대응은 두 갈래다 — <b>OpenSSH 인증서</b>(사내 SSH CA가 <code>ssh-keygen -s</code>로 짧은 유효기간의 인증서를 발급, 왼쪽 위 칸으로 이동)와 <b>FIDO 키</b>(OpenSSH 8.2, 2020-02부터 <code>ed25519-sk</code>·<code>ecdsa-sk</code> 키 유형, 오른쪽 아래 칸으로 이동).</p>
+
+<h2>세 방식 비교</h2>
+<table>
+  <tr><th></th><th>클라이언트 인증서 (소프트)</th><th>스마트카드 · TPM</th><th>SSH 키 파일</th><th>SSH + FIDO 키</th></tr>
+  <tr><td>키 보관</td><td class="no">OS 키 저장소 파일</td><td class="ok">칩, 비반출</td><td class="no">파일</td><td class="ok">칩</td></tr>
+  <tr><td>두 번째 요소</td><td class="na">선택 (저장소 잠금)</td><td class="ok">PIN 필수</td><td class="na">passphrase 선택</td><td class="ok">터치 + PIN(선택)</td></tr>
+  <tr><td>공개키 보증</td><td>CA</td><td>CA</td><td>허용 목록</td><td>허용 목록</td></tr>
+  <tr><td>중계 내성</td><td class="ok">transcript 서명</td><td class="ok">transcript 서명</td><td class="ok">세션 ID 서명</td><td class="ok">세션 ID 서명</td></tr>
+  <tr><td>단말 감염 시</td><td class="no">키 복사됨</td><td class="na">사용만 됨 (PIN 입력 중)</td><td class="no">키 복사됨</td><td class="na">사용만 됨</td></tr>
+  <tr><td>발급·회수</td><td class="no">사람마다 수동, 폐지 전파</td><td class="no">물리 발급, 창구 보안</td><td class="no">아무도 추적 안 함</td><td class="na">허용 목록 삭제로 끝</td></tr>
+  <tr><td>63B-4 AAL</td><td>2 (활성화 비밀번호가 있을 때; 없으면 1)</td><td>3 (WHfB는 TPM 키일 때)</td><td>2 (passphrase로 키 복호화; 없으면 1. 에이전트 캐시는 "매 인증마다 활성화"(§3.1.7.1)와 충돌)</td><td>3 가능 (<span class="est">추정</span>: PIN 설정·SSH 채널 바인딩 인정 전제)</td></tr>
+</table>
+
+<h2>위협 모델</h2>
+<table>
+  <tr><th>공격</th><th>파일 키</th><th>칩 키</th><th>비고</th></tr>
+  <tr><td>도청 · 재생 · 서버 유출 · 추측</td><td class="ok">막음</td><td class="ok">막음</td><td>공개키 인증 공통</td></tr>
+  <tr><td>피싱 · AiTM</td><td class="ok">막음</td><td class="ok">막음</td><td>TLS·SSH 모두 문맥 서명(TLS 1.3 또는 extended master secret 적용 TLS 기준 — 그 전 TLS는 2014 triple handshake 공격으로 클라이언트 인증서 사칭이 가능했다. SSH는 에이전트 포워딩을 끈 기준). 공동인증서는 예외(앞 페이지)</td></tr>
+  <tr><td>파일 탈취 + 잠금 패스워드 추측</td><td class="no">당함</td><td class="ok">해당 없음</td><td>1장 오프라인 추측이 그대로. passphrase 없는 SSH 키는 추측도 필요 없음</td></tr>
+  <tr><td>단말 감염 (세션 중 사용)</td><td class="no">못 막음</td><td class="no">못 막음</td><td>칩도 "사용"은 못 막음. 터치 요구가 완화</td></tr>
+  <tr><td>발급 창구 사회공학 · 무단 바인딩</td><td class="no">못 막음</td><td class="no">못 막음</td><td>CA·관리자·authorized_keys 편집 권한이 공격 대상</td></tr>
+  <tr><td>퇴사자 키 잔존 · 폐지 지연</td><td class="no">관리 문제</td><td class="na">카드 회수로 완화</td><td>SSH는 중앙 목록이 없어 최악. SSH CA + 짧은 유효기간이 해법</td></tr>
+</table>
+
+<h2>흔한 오해</h2>
+<div class="box"><b>"SSH 키는 패스워드보다 무조건 안전."</b> 서버 쪽(추측·유출)은 그렇다. 단말 쪽은 passphrase 없는 키 파일이 곧 패스워드 평문과 같다 — 복사 한 번이면 끝. 에이전트 포워딩까지 켜면 침해된 서버가 내 키로 다른 서버에 들어간다.</div>
+<div class="box"><b>"스마트카드는 구식, 패스키가 신식."</b> 같은 설계(비반출 키 + 로컬 PIN)의 두 세대다. 차이는 PKI 유무와 "서비스마다 다른 키"뿐이고, YubiKey 한 개에 둘 다 들어 있다.</div>
+<div class="box"><b>"클라이언트 인증서는 사라졌다."</b> 사람 인증에서는 그렇지만 기기 인증(MDM 배포 인증서, mTLS 서비스 간 인증, EAP-TLS)에서는 표준이다. 사라진 건 "사람이 인증서를 관리하는" 모델이다.</div>
+<div class="box"><b>"TPM이 있으니 노트북이 곧 보안키."</b> TPM은 키를 지키지만 PIN 입력은 OS 위에서 받는다. OS가 감염되면 PIN 입력 순간 키를 "사용"당한다. 보안키의 물리 터치가 그 틈을 좁히는 장치다.</div>
+
+<h2>내 연구와의 접점</h2>
+<div class="box">이 페이지의 왼쪽 열(파일 키)에서 "잠금 패스워드"는 내 연구 대상이 그대로 돌아오는 자리다. SSH passphrase·.p12 비밀번호·공동인증서 비밀번호는 전부 사람이 고른 문자열이고, 파일이 유출되면 오프라인 추측이 시작된다 — 그런데 이 패스워드들은 로그인 패스워드와 달리 차단 목록·시도 제한·유출 대조가 전혀 없다. 사용자가 로그인 패스워드를 재사용해 키 파일을 잠근다면(<span class="est">추정</span>: 측정 연구 미확인) PentaPassBreaker의 전이 예측이 그대로 적용된다. 오른쪽 열(칩 키)로 옮기면 그 변수가 사라진다. 패스워드 이후를 묻는 질문의 답이 "공개키냐 아니냐"가 아니라 "키가 파일이냐 칩이냐"인 이유.</div>
+
+<h2>참고 표준·문헌 (확인한 것)</h2>
+<ul class="refs">
+  <li><a href="https://www.rfc-editor.org/rfc/rfc8446">RFC 8446</a> §4.4.2–4.4.3 Certificate·CertificateVerify. <a href="https://www.rfc-editor.org/rfc/rfc4252">RFC 4252</a> §7 publickey 인증 — 서명 대상에 세션 ID. <a href="https://www.rfc-editor.org/rfc/rfc5216">RFC 5216</a> EAP-TLS</li>
+  <li><a href="https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.201-3.pdf">FIPS 201-3</a> (2022-01) §4.2.2.1 PIV Authentication Key — 카드 내 생성·반출 금지·비접촉 연산 금지 (원문 대조). <a href="https://pages.nist.gov/800-63-4/sp800-63b.html">NIST SP 800-63B-4</a> §3.1.6–3.1.7 cryptographic authenticator, §2.3.2 AAL3, §3.2.5 PIV/CAC channel binding (원문 대조). CAC = 국방부 카드라는 설명은 FIPS 본문에 없음(일반 지식)</li>
+  <li><a href="https://www.openssh.org/txt/release-8.2">OpenSSH 8.2</a> (2020-02-14) — FIDO/U2F 지원, "ecdsa-sk"·"ed25519-sk". <a href="https://man.openbsd.org/ssh-keygen#CERTIFICATES">ssh-keygen CERTIFICATES</a>. <a href="https://www.openssh.org/txt/release-9.5">OpenSSH 9.5</a> (2023-10-04) — "generate Ed25519 keys by default"</li>
+  <li><a href="https://learn.microsoft.com/en-us/windows/security/identity-protection/hello-for-business/deploy/">Windows Hello for Business 배포 가이드</a> — 신뢰 유형 3종, cloud Kerberos trust 권장, Entra 인증은 항상 키 (원문 대조)</li>
+  <li><a href="https://blog.benjojo.co.uk/post/auditing-github-users-keys">Ben Cox, "Auditing GitHub users' SSH keys"</a> (2015-06-02) — 1,376,262개 키, 약한 RSA·Debian 버그 키, GitHub 폐기 2015-05-05/06-01 (원문 대조)</li>
+</ul>
+<nav class="prevnext"><a href="npki.html">← 공동인증서(구 공인인증서)</a><a href="fido2.html">U2F → FIDO2: WebAuthn + CTAP →</a></nav>
+</main>
+</div>
+<footer class="site">전동호 (David Jeon) · 1차 출처(RFC·W3C/FIDO·NIST SP) 대조 후 확정한 내용만 "확정", 아니면 "추정"으로 표시</footer>
+</body>
+</html>
