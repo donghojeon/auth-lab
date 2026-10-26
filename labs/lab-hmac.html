@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HMAC-SHA256 해부도 — 사용자 인증 연구소</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a vertical pipeline of byte grids, one stage per row; a PBKDF2 chain ledger at the bottom */
+:root {
+  --bg: #f3f1ec; --panel: #fbfaf7; --fg: #1d1b17; --muted: #6b665c; --line: #d9d4ca;
+  --key: #c8701a; --key-soft: #f6dcc0;        /* 키 바이트 */
+  --pad: #e4dfd3;                               /* 0x00 패딩 */
+  --ipad: #1f6f8b; --ipad-soft: #cfe3ea;        /* K⊕ipad */
+  --opad: #6b4b9a; --opad-soft: #e2d8ef;        /* K⊕opad */
+  --msg: #3b7d3a; --msg-soft: #d4e8d0;          /* 메시지 */
+  --out: #1d1b17; --out-soft: #cfcbc2;          /* 해시 출력 */
+  --font-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #15171a; --panel: #1e2126; --fg: #ebe7df; --muted: #a09a8e; --line: #353a42;
+  --key: #f0a24f; --key-soft: #4a3418; --pad: #2a2e35; --ipad: #5fb8d6; --ipad-soft: #163a48;
+  --opad: #b095d8; --opad-soft: #2e2340; --msg: #7cc47a; --msg-soft: #1e3a1e; --out: #ebe7df; --out-soft: #3a3e46;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #15171a; --panel: #1e2126; --fg: #ebe7df; --muted: #a09a8e; --line: #353a42;
+  --key: #f0a24f; --key-soft: #4a3418; --pad: #2a2e35; --ipad: #5fb8d6; --ipad-soft: #163a48;
+  --opad: #b095d8; --opad-soft: #2e2340; --msg: #7cc47a; --msg-soft: #1e3a1e; --out: #ebe7df; --out-soft: #3a3e46;
+  color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.65;
+  padding-block: 32px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 28px; }
+h1 { font-size: 26px; font-weight: 600; margin: 0 0 6px; letter-spacing: -0.01em; text-wrap: balance; }
+h2 { font-size: 17px; font-weight: 600; margin: 0; }
+p { margin: 0; max-width: 68ch; }
+.lead, .muted { color: var(--muted); }
+.eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 720px) { .inputs { grid-template-columns: 1fr; } }
+.field { display: grid; gap: 4px; font-size: 13px; min-width: 0; }
+.field input, .field select { font: inherit; font-family: var(--font-mono); font-size: 13px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); color: var(--fg); width: 100%; }
+.field .row { display: flex; gap: 6px; }
+.field .row select { width: auto; }
+button { font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 4px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer; }
+button.primary { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--key); outline-offset: 2px; }
+.presets { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 13px; }
+.stage { display: grid; grid-template-columns: 2.2em 1fr; gap: 12px; align-items: start; }
+.stage .no { font-family: var(--font-mono); font-size: 13px; color: var(--muted); padding-top: 2px; }
+.stage .body { display: grid; gap: 8px; min-width: 0; }
+.stage h3 { font-size: 14px; font-weight: 600; margin: 0; }
+.stage h3 code { font-weight: 500; color: var(--muted); }
+.grid { display: grid; grid-template-columns: repeat(32, 1fr); gap: 2px; max-width: 100%; }
+@media (max-width: 720px) { .grid { grid-template-columns: repeat(16, 1fr); } }
+.b { aspect-ratio: 1; border-radius: 2px; background: var(--pad); font-family: var(--font-mono); font-size: 8px; display: grid; place-items: center; color: var(--muted); overflow: hidden; }
+@media (max-width: 720px) { .b { font-size: 7px; } }
+.b.key { background: var(--key-soft); color: var(--key); } .b.ipad { background: var(--ipad-soft); color: var(--ipad); }
+.b.opad { background: var(--opad-soft); color: var(--opad); } .b.msg { background: var(--msg-soft); color: var(--msg); }
+.b.out { background: var(--out-soft); color: var(--out); } .b.lenpad { background: transparent; border: 1px dashed var(--line); }
+.blocks { display: flex; gap: 6px; flex-wrap: wrap; font-size: 12px; }
+.blk { border: 1px solid var(--line); border-radius: 4px; padding: 3px 8px; font-family: var(--font-mono); background: var(--bg); }
+.blk.pre { border-style: dashed; color: var(--muted); }
+.hex { font-family: var(--font-mono); font-size: 12.5px; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.hex b { font-weight: 500; }
+.legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+.arrow { color: var(--muted); font-size: 13px; padding-left: 3.1em; }
+.chain table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+.chain th, .chain td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.chain td.h { font-family: var(--font-mono); overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.tablewrap { overflow-x: auto; }
+.cnt { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-size: 12px; }
+.cnt div { border-top: 2px solid var(--line); padding-top: 4px; } .cnt b { display: block; font-family: var(--font-mono); font-size: 16px; font-weight: 500; }
+.err { color: #b3261e; font-size: 13px; }
+.crumb { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 13px; color: var(--muted); }
+.crumb a { color: inherit; }
+.crumb b { color: var(--fg); font-weight: 600; }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <nav class="crumb"><a href="index.html">← 사용자 인증 연구소</a><span>9장 실습 랩: <b>HMAC 해부도</b> · <a href="lab-mhf.html">메모리 하드 실험실</a> · <a href="lab-argon2.html">Argon2 행렬</a></span><span>개념 설명은 <a href="password-storage.html">1장 서버 저장</a></span></nav>
+
+  <div>
+    <div class="eyebrow">HMAC(K, m) = SHA256( (K⊕opad) ‖ SHA256( (K⊕ipad) ‖ m ) )</div>
+    <h1>HMAC-SHA256 해부도</h1>
+    <p class="lead">키와 메시지를 넣으면 다섯 단계의 바이트 배열이 실제 값으로 그려집니다. 기본값은 PBKDF2의 첫 번째 반복 U₁ = HMAC(비밀번호, 솔트 ‖ 00000001) 입니다. 계산은 브라우저의 Web Crypto(SHA-256)로 합니다. 같은 구조가 <a href="otp.html" style="color:inherit">TOTP</a>의 HMAC-SHA-1에도 쓰입니다. 블록은 똑같이 64바이트이고 출력만 20바이트입니다.</p>
+  </div>
+
+  <div class="panel">
+    <div class="inputs">
+      <div class="field"><label for="key">키 K (PBKDF2에서는 비밀번호)</label>
+        <div class="row"><select id="keyMode"><option value="text" selected>text</option><option value="hex">hex</option></select><input id="key" value="Password123!" spellcheck="false"></div></div>
+      <div class="field"><label for="msg">메시지 m (PBKDF2에서는 솔트 ‖ 블록번호)</label>
+        <div class="row"><select id="msgMode"><option value="text">text</option><option value="hex" selected>hex</option></select><input id="msg" value="9f86d081884c7d659a2feaa0c55ad01500000001" spellcheck="false"></div></div>
+    </div>
+    <div class="presets">
+      <span class="muted">예시:</span>
+      <button data-k="Password123!" data-km="text" data-m="9f86d081884c7d659a2feaa0c55ad01500000001" data-mm="hex">PBKDF2 U₁</button>
+      <button data-k="Jefe" data-km="text" data-m="what do ya want for nothing?" data-mm="text">RFC 4231 #2</button>
+      <button data-k="0b2f4a6c8e1d3f5a7c9e1b3d5f7a9c0e0b2f4a6c8e1d3f5a7c9e1b3d5f7a9c0e" data-km="hex" data-m="Password123!" data-mm="text">keyed hash 예: HMAC(pepper, ·)</button>
+      <button data-k="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" data-km="hex" data-m="Test Using Larger Than Block-Size Key - Hash Key First" data-mm="text">64바이트보다 긴 키 (RFC 4231 #6)</button>
+    </div>
+    <p class="muted" style="font-size:13px">RFC 4231 버튼의 기대값: #2는 <code class="hex">5bdcc146…64ec3843</code>, #6은 <code class="hex">60e43159…0ee37f54</code>. 아래 HMAC 줄과 맞는지 확인해 보세요. keyed hash 버튼은 HMAC 구조만 보여 주는 예입니다. 실제 pepper는 패스워드에 바로 거는 것이 아니라, 느린 KDF의 출력에 HSM 안에서 한 번 더 거는 것이 63B-4의 구성입니다.</p>
+    <div class="err" id="err" hidden></div>
+    <div class="legend"><span><i style="background:var(--key-soft);border:1px solid var(--key)"></i>키 바이트</span><span><i style="background:var(--pad)"></i>0x00 패딩</span><span><i style="background:var(--ipad-soft);border:1px solid var(--ipad)"></i>K⊕ipad (0x36)</span><span><i style="background:var(--opad-soft);border:1px solid var(--opad)"></i>K⊕opad (0x5c)</span><span><i style="background:var(--msg-soft);border:1px solid var(--msg)"></i>메시지</span><span><i style="background:var(--out-soft);border:1px solid var(--out)"></i>SHA-256 출력</span></div>
+  </div>
+
+  <div class="panel">
+    <div class="stage"><div class="no">1</div><div class="body">
+      <h3>키를 64바이트 블록에 맞춤 <code>K′</code></h3>
+      <p class="muted" id="s1-note"></p>
+      <div class="grid" id="g1"></div></div></div>
+    <div class="arrow">↓ 각 바이트에 0x36을 XOR</div>
+    <div class="stage"><div class="no">2</div><div class="body">
+      <h3>내부 키 <code>K′ ⊕ ipad</code></h3>
+      <div class="grid" id="g2"></div></div></div>
+    <div class="arrow">↓ 뒤에 메시지를 붙여 SHA-256</div>
+    <div class="stage"><div class="no">3</div><div class="body">
+      <h3>내부 해시 <code>SHA256( (K′⊕ipad) ‖ m )</code></h3>
+      <div class="grid" id="g3"></div>
+      <div class="blocks" id="blk3"></div>
+      <div class="hex">inner = <b id="h3"></b></div></div></div>
+    <div class="arrow">↓ 키에 0x5c를 XOR한 외부 키를 준비</div>
+    <div class="stage"><div class="no">4</div><div class="body">
+      <h3>외부 키 <code>K′ ⊕ opad</code></h3>
+      <div class="grid" id="g4"></div></div></div>
+    <div class="arrow">↓ 뒤에 내부 해시 32바이트를 붙여 SHA-256</div>
+    <div class="stage"><div class="no">5</div><div class="body">
+      <h3>외부 해시 = HMAC <code>SHA256( (K′⊕opad) ‖ inner )</code></h3>
+      <div class="grid" id="g5"></div>
+      <div class="blocks" id="blk5"></div>
+      <div class="hex">HMAC = <b id="h5"></b></div></div></div>
+    <div class="cnt">
+      <div>SHA-256 압축 호출<b id="c-total"></b></div>
+      <div>키가 같으면 미리 계산 가능<b id="c-pre"></b></div>
+      <div>같은 키로 반복할 때 1회 비용<b id="c-real"></b></div>
+    </div>
+    <p class="muted">압축 함수는 64바이트 블록 하나를 처리합니다. 점선 블록은 키만으로 정해지는 첫 블록이라, PBKDF2처럼 같은 키로 수십만 번 부를 때는 한 번만 계산하고 재사용합니다. 그래서 PBKDF2의 반복 1회(메시지가 32바이트인 U₂부터)는 방어자에게나 공격자에게나 사실상 압축 2회입니다. 추측 하나의 비용은 대략 반복 횟수 × 2입니다(출력이 32바이트 이하일 때. 그보다 길면 출력 블록 수만큼 곱해집니다).</p>
+  </div>
+
+  <div class="panel chain">
+    <h2>PBKDF2 체인으로 이어 보기</h2>
+    <p class="muted">위 결과를 U₁로 두고, 다음 반복은 HMAC(비밀번호, 직전 U)입니다. 출력 T는 모든 U의 XOR입니다. 키 입력을 비밀번호로 두었을 때만 의미가 있습니다.</p>
+    <div class="presets"><button class="primary" id="next">다음 반복 U<sub>i+1</sub> 계산</button><button id="chainReset">체인 초기화</button><span class="muted" id="chainInfo"></span></div>
+    <div class="tablewrap"><table><thead><tr><th>i</th><th>Uᵢ = HMAC(pw, ·)</th><th>T = U₁ ⊕ … ⊕ Uᵢ</th></tr></thead><tbody id="chainBody"></tbody></table></div>
+  </div>
+  <div class="panel">
+    <h2>참고 표준</h2>
+    <ul class="muted" style="margin:0;padding-left:1.2em;font-size:13px">
+      <li><a href="https://www.rfc-editor.org/rfc/rfc2104" style="color:inherit">RFC 2104</a> HMAC 정의: 블록 B=64, ipad 0x36, opad 0x5c, B보다 긴 키는 먼저 해시 (§2)</li>
+      <li><a href="https://www.rfc-editor.org/rfc/rfc4231" style="color:inherit">RFC 4231</a> HMAC-SHA-256 테스트 케이스 (#2, #6 값 대조)</li>
+      <li><a href="https://www.rfc-editor.org/rfc/rfc8018#section-5.2" style="color:inherit">RFC 8018 §5.2</a> PBKDF2: U₁ = PRF(P, S ‖ INT(i)), T = U₁ ⊕ … ⊕ U_c</li>
+      <li><a href="https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html" style="color:inherit">OWASP Password Storage Cheat Sheet</a> PBKDF2-HMAC-SHA256 반복 횟수</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const enc = new TextEncoder();
+const toHex = u8 => [...u8].map(b => b.toString(16).padStart(2, '0')).join('');
+function parse(str, mode) {
+  if (mode === 'text') return enc.encode(str);
+  const s = str.replace(/\s+/g, '');
+  if (!/^[0-9a-fA-F]*$/.test(s) || s.length % 2) throw new Error('hex는 0-9a-f 짝수 자리여야 합니다.');
+  return Uint8Array.from(s.match(/../g) || [], h => parseInt(h, 16));
+}
+const sha256 = async u8 => new Uint8Array(await crypto.subtle.digest('SHA-256', u8));
+const cat = (...a) => { const o = new Uint8Array(a.reduce((n, x) => n + x.length, 0)); let p = 0; for (const x of a) { o.set(x, p); p += x.length; } return o; };
+
+function grid(el, parts) {        // parts: [{bytes, cls, ascii?}]
+  let html = '';
+  for (const p of parts) for (const b of p.bytes) {
+    const ch = p.ascii && b >= 0x21 && b <= 0x7e ? String.fromCharCode(b) : b.toString(16).padStart(2, '0');
+    html += `<div class="b ${p.cls}" title="0x${b.toString(16).padStart(2, '0')}">${ch}</div>`;
+  }
+  el.innerHTML = html;
+}
+function blocks(el, msgLen) {     // 64바이트 키블록 + msgLen 바이트 + 패딩(1+8 이상)
+  const n = Math.ceil((64 + msgLen + 9) / 64);
+  el.innerHTML = `<span class="blk pre">블록 1 · 키 (미리 계산)</span>` + Array.from({ length: n - 1 }, (_, i) => `<span class="blk">블록 ${i + 2}</span>`).join('') + `<span class="muted">총 ${n}블록, 메시지 ${msgLen}B + 패딩</span>`;
+  return n;
+}
+
+let keyBytes, lastHmac;
+async function hmac(key, msg) {
+  const K = key.length > 64 ? await sha256(key) : key;
+  const Kp = new Uint8Array(64); Kp.set(K);
+  const ki = Kp.map(b => b ^ 0x36), ko = Kp.map(b => b ^ 0x5c);
+  const inner = await sha256(cat(ki, msg));
+  const out = await sha256(cat(ko, inner));
+  return { K, Kp, ki, ko, inner, out };
+}
+
+async function run() {
+  $('err').hidden = true;
+  try {
+    const key = parse($('key').value, $('keyMode').value), msg = parse($('msg').value, $('msgMode').value);
+    keyBytes = key;
+    const r = await hmac(key, msg);
+    lastHmac = r.out;
+    const keyAscii = $('keyMode').value === 'text';
+    $('s1-note').textContent = key.length > 64
+      ? `키가 ${key.length}바이트로 블록(64)보다 길어서 먼저 SHA-256으로 32바이트로 줄인 뒤 0으로 채웁니다.`
+      : `키 ${key.length}바이트 뒤를 0x00 ${64 - key.length}개로 채워 64바이트로 만듭니다.`;
+    grid($('g1'), [{ bytes: r.K, cls: 'key', ascii: keyAscii && key.length <= 64 }, { bytes: new Uint8Array(64 - r.K.length), cls: '' }]);
+    grid($('g2'), [{ bytes: r.ki, cls: 'ipad' }]);
+    grid($('g3'), [{ bytes: r.ki, cls: 'ipad' }, { bytes: msg, cls: 'msg', ascii: $('msgMode').value === 'text' }]);
+    const n3 = blocks($('blk3'), msg.length);
+    $('h3').textContent = toHex(r.inner);
+    grid($('g4'), [{ bytes: r.ko, cls: 'opad' }]);
+    grid($('g5'), [{ bytes: r.ko, cls: 'opad' }, { bytes: r.inner, cls: 'out' }]);
+    const n5 = blocks($('blk5'), 32);
+    $('h5').textContent = toHex(r.out);
+    const kh = key.length > 64 ? Math.ceil((key.length + 9) / 64) : 0;   // 긴 키를 먼저 해시하는 비용 (키당 1회)
+    $('c-total').textContent = n3 + n5 + kh; $('c-pre').textContent = 2 + kh; $('c-real').textContent = n3 + n5 - 2;
+    resetChain();
+  } catch (e) { $('err').textContent = e.message; $('err').hidden = false; }
+}
+
+// ── PBKDF2 체인 ──
+let U, T, i;
+function resetChain() {
+  U = lastHmac; T = Uint8Array.from(U); i = 1;
+  $('chainBody').innerHTML = `<tr><td>1</td><td class="h">${toHex(U)}</td><td class="h">${toHex(T)}</td></tr>`;
+  $('chainInfo').textContent = '';
+}
+async function nextIter() {
+  const r = await hmac(keyBytes, U);
+  U = r.out; T = T.map((b, k) => b ^ U[k]); i++;
+  $('chainBody').insertAdjacentHTML('beforeend', `<tr><td>${i}</td><td class="h">${toHex(U)}</td><td class="h">${toHex(T)}</td></tr>`);
+  $('chainInfo').textContent = `${i}회 반복. OWASP 권장 PBKDF2-HMAC-SHA256 600,000회라면 이걸 ${600000 - i}번 더 돌리고 마지막 T를 출력합니다.`;
+}
+$('next').onclick = nextIter;
+$('chainReset').onclick = resetChain;
+for (const id of ['key', 'msg']) $(id).addEventListener('input', run);
+for (const id of ['keyMode', 'msgMode']) $(id).addEventListener('change', run);
+document.querySelectorAll('.presets button[data-k]').forEach(b => b.onclick = () => {
+  $('key').value = b.dataset.k; $('keyMode').value = b.dataset.km; $('msg').value = b.dataset.m; $('msgMode').value = b.dataset.mm; run();
+});
+run();
+</script>
+
+</body></html>

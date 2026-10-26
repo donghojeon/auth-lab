@@ -9,8 +9,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).parent
 SRC, DOCS, STATIC = ROOT / "src", ROOT / "docs", ROOT / "static"
+LABS = ROOT / "labs"  # 독립 실습 페이지: layout으로 감싸지 않고 그대로 복사
 
-# 커리큘럼 = 목차. (장 제목, [(slug, 페이지 제목), ...]). src/에 파일이 없으면 회색으로만 표시.
+# 커리큘럼 = 목차. (장 제목, [(slug, 페이지 제목), ...]). src/·labs/에 파일이 없으면 회색으로만 표시.
 TOC = [
     ("0. 인증의 기초", [("history", "인증의 역사 — 한 장의 맵"),
                         ("basics", "식별·인증·인가와 인증 요소"),
@@ -36,10 +37,17 @@ TOC = [
     ("6. 생체 인증", [("biometrics", "로컬 매칭 vs 서버 매칭, FAR·FRR")]),
     ("7. 계정 등록·복구", [("recovery", "가장 약한 고리")]),
     ("8. 실전 공격 사례", [("attacks", "Kerberoasting부터 세션 탈취까지")]),
-    ("9. 실습 랩", [("lab-webauthn", "WebAuthn 등록·인증 데모"),
+    ("9. 실습 랩", [("lab-hmac", "HMAC-SHA256 해부도"),
+                    ("lab-mhf", "메모리 하드 함수 실험실"),
+                    ("lab-argon2", "Argon2 메모리 행렬"),
+                    ("lab-webauthn", "WebAuthn 등록·인증 데모"),
                     ("lab-totp", "TOTP 생성기"),
                     ("lab-compare", "방식별 \"서버에 남는 것\" 비교")]),
 ]
+
+
+def written(slug):
+    return (SRC / f"{slug}.html").exists() or (LABS / f"{slug}.html").exists()
 
 
 def nav_html(current):
@@ -47,7 +55,7 @@ def nav_html(current):
     for chapter, pages in TOC:
         out.append(f'<li class="chap">{chapter}<ul>')
         for slug, title in pages:
-            if not (SRC / f"{slug}.html").exists():
+            if not written(slug):
                 out.append(f'<li class="todo">{title}</li>')
             elif slug == current:
                 out.append(f'<li class="cur"><a href="{slug}.html">{title}</a></li>')
@@ -59,12 +67,12 @@ def nav_html(current):
 
 def prevnext_html(slug):
     """커리큘럼 순서에서 이전·다음 '작성된' 페이지 링크."""
-    written = [(s, t) for _, pages in TOC for s, t in pages if (SRC / f"{s}.html").exists()]
-    i = next((k for k, (s, _) in enumerate(written) if s == slug), None)
+    pages = [(s, t) for _, ps in TOC for s, t in ps if written(s)]
+    i = next((k for k, (s, _) in enumerate(pages) if s == slug), None)
     if i is None:
         return ""
-    prev = f'<a href="{written[i-1][0]}.html">← {written[i-1][1]}</a>' if i > 0 else "<span></span>"
-    nxt = f'<a href="{written[i+1][0]}.html">{written[i+1][1]} →</a>' if i + 1 < len(written) else "<span></span>"
+    prev = f'<a href="{pages[i-1][0]}.html">← {pages[i-1][1]}</a>' if i > 0 else "<span></span>"
+    nxt = f'<a href="{pages[i+1][0]}.html">{pages[i+1][1]} →</a>' if i + 1 < len(pages) else "<span></span>"
     return f'<nav class="prevnext">{prev}{nxt}</nav>'
 
 
@@ -84,6 +92,9 @@ def main():
                       .replace("{{body}}", body))
         (DOCS / src.name).write_text(html)
         print("built", src.name)
+    for lab in sorted(LABS.glob("*.html")):
+        shutil.copy(lab, DOCS / lab.name)
+        print("copied", lab.name)
 
 
 if __name__ == "__main__":

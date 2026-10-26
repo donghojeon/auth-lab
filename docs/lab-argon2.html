@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Argon2 메모리 행렬 — 사용자 인증 연구소</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: inputs → H0 → memory matrix (lanes × columns, 4 slices) animated → final tag; a legend rail explains colors */
+:root {
+  --bg: #f3f1ec; --panel: #fbfaf7; --fg: #1d1b17; --muted: #6b665c; --line: #d9d4ca;
+  --cur: #c8701a; --cur-soft: #f6dcc0;      /* 지금 계산 중인 블록 */
+  --prev: #1f6f8b; --prev-soft: #cfe3ea;    /* 직전 블록 */
+  --ref: #6b4b9a; --ref-soft: #e2d8ef;      /* 참조 블록 */
+  --done: #cfcbc2; --done2: #a7a297;        /* 1패스 / 2패스 이상 덮어쓴 블록 */
+  --win: #ece8df;                           /* 참조 가능 영역 */
+  --font-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #15171a; --panel: #1e2126; --fg: #ebe7df; --muted: #a09a8e; --line: #353a42;
+  --cur: #f0a24f; --cur-soft: #4a3418; --prev: #5fb8d6; --prev-soft: #163a48; --ref: #b095d8; --ref-soft: #2e2340;
+  --done: #3a3e46; --done2: #4c515b; --win: #262a31; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #15171a; --panel: #1e2126; --fg: #ebe7df; --muted: #a09a8e; --line: #353a42;
+  --cur: #f0a24f; --cur-soft: #4a3418; --prev: #5fb8d6; --prev-soft: #163a48; --ref: #b095d8; --ref-soft: #2e2340;
+  --done: #3a3e46; --done2: #4c515b; --win: #262a31; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.65;
+  padding-block: 32px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 1000px; margin: 0 auto; display: grid; gap: 24px; }
+h1 { font-size: 26px; font-weight: 600; margin: 0 0 6px; letter-spacing: -0.01em; text-wrap: balance; }
+h2 { font-size: 16px; font-weight: 600; margin: 0; }
+p { margin: 0; max-width: 70ch; }
+.muted { color: var(--muted); }
+.eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; font-size: 13px; }
+.controls label { display: inline-flex; gap: 6px; align-items: center; }
+button { font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 4px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer; }
+button.primary { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--cur); outline-offset: 2px; }
+select, input[type=range] { font: inherit; font-size: 13px; }
+.h0 { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; font-size: 12px; }
+.h0 div { border-top: 2px solid var(--line); padding-top: 4px; min-width: 0; }
+.h0 b { display: block; font-family: var(--font-mono); font-weight: 500; overflow-wrap: anywhere; }
+.formula { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); overflow-wrap: anywhere; }
+.matrix { display: grid; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+.slices { display: grid; grid-template-columns: 3.4em repeat(4, 1fr); gap: 4px; font-family: var(--font-mono); font-size: 11px; color: var(--muted); text-align: center; min-width: 520px; }
+.lane { display: grid; grid-template-columns: 3.4em repeat(4, 1fr); gap: 4px; align-items: center; min-width: 520px; }
+.lane .name { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+.seg { display: grid; gap: 3px; padding: 3px; border-radius: 3px; border: 1px solid transparent; }
+.seg.win { background: var(--win); }
+.seg.cur { border-color: var(--cur); }
+.blk { aspect-ratio: 1.6; border-radius: 2px; background: var(--line); font-family: var(--font-mono); font-size: 9px; display: grid; place-items: center; color: var(--muted); transition: background .1s, outline .1s; position: relative; }
+.blk.done { background: var(--done); color: var(--fg); } .blk.done.p2 { background: var(--done2); }
+.blk.prev { outline: 2px solid var(--prev); background: var(--prev-soft); color: var(--prev); }
+.blk.ref { outline: 2px solid var(--ref); background: var(--ref-soft); color: var(--ref); }
+.blk.cur { background: var(--cur); color: #fff; transform: scale(1.1); z-index: 1; }
+.blk.last { box-shadow: inset 0 -3px 0 var(--fg); }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; font-size: 12px; }
+@media (max-width: 720px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+.stat { border-top: 2px solid var(--line); padding-top: 4px; } .stat b { display: block; font-family: var(--font-mono); font-size: 16px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.stat.c { border-color: var(--cur); } .stat.r { border-color: var(--ref); }
+.legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.legend i { display: inline-block; width: 12px; height: 9px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+.note { font-size: 13px; min-height: 1.6em; }
+.note code { font-family: var(--font-mono); font-size: .92em; }
+.tag { font-family: var(--font-mono); font-size: 12.5px; overflow-wrap: anywhere; }
+table { border-collapse: collapse; font-size: 13px; width: 100%; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+td.n { font-family: var(--font-mono); text-align: right; font-variant-numeric: tabular-nums; }
+.tablewrap { overflow-x: auto; }
+.prose { display: grid; gap: 10px; }
+@media (prefers-reduced-motion: reduce) { .blk { transition: none; } }
+.crumb { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 13px; color: var(--muted); }
+.crumb a { color: inherit; }
+.crumb b { color: var(--fg); font-weight: 600; }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <nav class="crumb"><a href="index.html">← 사용자 인증 연구소</a><span>9장 실습 랩: <a href="lab-hmac.html">HMAC 해부도</a> · <a href="lab-mhf.html">메모리 하드 실험실</a> · <b>Argon2 행렬</b></span><span>개념 설명은 <a href="password-storage.html">1장 서버 저장</a></span></nav>
+
+  <div>
+    <div class="eyebrow">B[l][j] = G( B[l][j−1], B[ref] )</div>
+    <h1>Argon2 메모리 행렬</h1>
+    <p class="muted">Argon2는 메모리를 lane × 열의 행렬로 잡고, 블록 하나를 만들 때마다 <b>직전 블록</b>과 <b>이미 만들어진 블록 중 하나(참조)</b>를 압축 함수 G에 넣습니다. 참조를 고르는 방식이 d/i/id를 가릅니다. 블록 값은 시각화용 32비트 믹서의 가짜이고, 채우는 순서와 참조 규칙은 RFC 9106을 따릅니다.</p>
+  </div>
+
+  <div class="panel">
+    <div class="controls">
+      <button class="primary" id="play">▶ 재생</button>
+      <button id="step">한 블록</button>
+      <button id="reset">초기화</button>
+      <label>변종 <select id="type"><option value="id" selected>Argon2id</option><option value="d">Argon2d</option><option value="i">Argon2i</option></select></label>
+      <label>lane p <select id="p"><option>1</option><option selected>2</option><option>4</option></select></label>
+      <label>블록 m <select id="m"><option>16</option><option selected>32</option><option>64</option></select></label>
+      <label>패스 t <select id="t"><option>1</option><option selected>2</option><option>3</option></select></label>
+      <label>속도 <input type="range" id="speed" min="1" max="10" value="6"></label>
+    </div>
+    <div class="h0">
+      <div>비밀번호<b>Password123!</b></div>
+      <div>솔트<b>9f86d081…c55ad015</b></div>
+      <div>파라미터<b id="h0-params"></b></div>
+      <div>H₀ = Blake2b(파라미터 ‖ pw ‖ salt ‖ K ‖ X)<b id="h0"></b></div>
+    </div>
+    <div class="formula">B[l][0] = H′(H₀ ‖ 0 ‖ l),  B[l][1] = H′(H₀ ‖ 1 ‖ l)   — lane마다 첫 두 블록은 H₀에서 직접 만듭니다</div>
+  </div>
+
+  <div class="panel">
+    <div class="matrix" id="matrix"></div>
+    <div class="legend"><span><i style="background:var(--cur)"></i>계산 중</span><span><i style="background:var(--prev-soft);outline:2px solid var(--prev)"></i>직전 블록</span><span><i style="background:var(--ref-soft);outline:2px solid var(--ref)"></i>참조 블록</span><span><i style="background:var(--win)"></i>참조 가능 영역</span><span><i style="background:var(--done)"></i>1패스 완료</span><span><i style="background:var(--done2)"></i>2패스 이상 덮어씀</span></div>
+    <div class="stats">
+      <div class="stat c">G 호출<b id="s-g">0</b></div>
+      <div class="stat">점유 블록<b id="s-mem">0</b></div>
+      <div class="stat">패스 / 슬라이스<b id="s-pos">—</b></div>
+      <div class="stat r">참조 방식<b id="s-mode">—</b></div>
+    </div>
+    <div class="note" id="note">재생을 누르면 lane 0부터 슬라이스 단위로 채웁니다. 같은 슬라이스 안에서는 lane들이 병렬로 계산될 수 있어서, 다른 lane의 현재 슬라이스는 참조할 수 없습니다.</div>
+    <div class="tag" id="tag"></div>
+  </div>
+
+  <div class="panel prose">
+    <h2>참조 블록을 고르는 세 가지 방식</h2>
+    <p><b>Argon2d</b>는 직전 블록의 첫 32비트를 J₁, 다음 32비트를 J₂로 씁니다. 세 변종 모두 J₂ mod p로 참조할 lane을 고르고(첫 패스 첫 슬라이스는 자기 lane), J₁로 그 lane 안의 위치를 고릅니다. 값을 계산해 보기 전에는 어디를 읽을지 알 수 없어서 메모리를 전부 들고 있어야 하지만, 같은 기계의 다른 프로세스가 캐시 접근 패턴을 엿보면 비밀번호 정보가 샙니다.</p>
+    <p><b>Argon2i</b>는 J₁·J₂를 (패스, lane, 슬라이스, 전체 블록 수, 패스 수, 변종, 카운터)만으로 G를 두 번 돌려 만듭니다. 비밀번호와 무관하니 접근 패턴이 새지 않지만, 공격자도 패턴을 미리 알 수 있어 메모리를 줄이는 공격(Alwen–Blocki, CRYPTO 2016)이 어느 정도 통합니다. RFC 9106 §7.2는 1 GiB·3패스 기준 비용을 약 3분의 1로 줄인다고 적습니다.</p>
+    <p><b>Argon2id</b>는 첫 패스의 앞 두 슬라이스만 i 방식, 나머지는 d 방식입니다. 비밀번호가 메모리 접근에 영향을 주기 시작할 때쯤이면 이미 메모리 절반이 i 방식으로 채워져 있어 사이드채널 이득이 작고, 뒤 절반은 d 방식이라 메모리 하드성이 살아납니다. RFC 9106과 OWASP의 기본 권장입니다.</p>
+    <p>J₁에서 실제 위치를 뽑을 때는 <code>x = J₁²/2³², y = |W|·x/2³², z = |W| − 1 − y</code>처럼 제곱을 써서 <b>최근 블록이 더 자주 뽑히게</b> 편향시킵니다(RFC 9106 §3.4.2). W는 오래된 블록부터 줄 세우는데, 둘째 패스부터는 현재 슬라이스 바로 다음 슬라이스(이전 패스 값)가 가장 오래된 쪽입니다. 위 애니메이션에서 참조가 계산 중인 블록 근처에 몰리는 이유입니다.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>RFC 9106 §4 둘째 권장 (m=65536, t=3, p=4, 솔트 128비트, tag 256비트)</th><th class="n">값</th></tr></thead>
+      <tbody>
+        <tr><td>블록 수 × 크기</td><td class="n">65,536 × 1 KiB = 64 MiB</td></tr>
+        <tr><td>lane당 열 / 슬라이스당 블록</td><td class="n">16,384 / 4,096</td></tr>
+        <tr><td>G 호출 수 (m × t − 2p, 각 lane 첫 두 블록은 H′로 만듦)</td><td class="n">196,600</td></tr>
+        <tr><td>G 한 번 = 1 KiB를 8×8 행렬로 보고 P(BLAKE2b 1라운드에 곱셈을 더한 변형)를 행 8회·열 8회</td><td class="n">P 16회 ≈ BLAKE2b 압축 1.3회분</td></tr>
+        <tr><td>출력 tag = H′( B[0][last] ⊕ … ⊕ B[p−1][last] )</td><td class="n">32 B (길이는 선택)</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <div class="panel">
+    <h2>참고 표준·문헌</h2>
+    <ul class="muted" style="margin:0;padding-left:1.2em;font-size:13px">
+      <li><a href="https://www.rfc-editor.org/rfc/rfc9106" style="color:inherit">RFC 9106</a> §3.2(채우기, 2패스부터 XOR), §3.4(J₁·J₂, 참조 집합 W, 편향 매핑), §3.5–3.6(G와 P), §4(권장 파라미터), §7.2(Argon2i 공격)</li>
+      <li><a href="https://github.com/P-H-C/phc-winner-argon2/blob/master/src/core.c" style="color:inherit">레퍼런스 구현 core.c</a> index_alpha: W의 시작 위치(가장 오래된 블록)</li>
+      <li>Alwen &amp; Blocki, "Efficiently Computing Data-Independent Memory-Hard Functions", CRYPTO 2016</li>
+      <li><a href="https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html" style="color:inherit">OWASP Password Storage Cheat Sheet</a> Argon2id 최소값 m=19 MiB, t=2, p=1</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+// ── 시각화용 32비트 믹서 (암호학적 의미 없음) ──
+function mix(x) { x = (x ^ (x >>> 16)) >>> 0; x = Math.imul(x, 0x45d9f3b) >>> 0; x = (x ^ (x >>> 16)) >>> 0; x = Math.imul(x, 0x45d9f3b) >>> 0; return (x ^ (x >>> 16)) >>> 0; }
+const G = (a, b) => mix((a ^ Math.imul(b, 0x9e3779b1)) >>> 0);
+const h4 = v => (v >>> 16).toString(16).padStart(4, '0');
+const $ = id => document.getElementById(id);
+
+let P, M, T, TYPE, Q, SEG, B, writes, pass, slice, lane, col, gcalls, timer, finished, order, idx;
+
+function reset() {
+  clearInterval(timer); timer = null; finished = false; $('play').textContent = '▶ 재생';
+  P = +$('p').value; M = +$('m').value; T = +$('t').value; TYPE = $('type').value;
+  Q = M / P; SEG = Q / 4; gcalls = 0;
+  const H0 = mix(0x5eed ^ (M << 8) ^ (T << 4) ^ P);
+  $('h0-params').textContent = `m=${M}, t=${T}, p=${P}`;
+  $('h0').textContent = h4(H0) + h4(mix(H0)) + '…';
+  B = Array.from({ length: P }, () => Array.from({ length: Q }, () => null));
+  writes = Array.from({ length: P }, () => Array.from({ length: Q }, () => 0));
+  for (let l = 0; l < P; l++) { B[l][0] = mix(H0 ^ (l << 1)); B[l][1] = mix(H0 ^ (l << 1) ^ 1); writes[l][0] = writes[l][1] = 1; }
+  // 계산 순서: pass → slice → lane → col (slice 안에서 lane은 병렬이지만 시각화는 순차)
+  order = [];
+  for (let ps = 0; ps < T; ps++) for (let s = 0; s < 4; s++) for (let l = 0; l < P; l++)
+    for (let c = s * SEG; c < (s + 1) * SEG; c++) { if (ps === 0 && c < 2) continue; order.push([ps, s, l, c]); }
+  idx = 0;
+  buildMatrix(); paint(null); $('tag').textContent = '';
+  $('s-g').textContent = 0; $('s-mem').textContent = 2 * P; $('s-pos').textContent = '—'; $('s-mode').textContent = '—';
+  $('note').textContent = '재생을 누르면 lane 0부터 슬라이스 단위로 채웁니다. 같은 슬라이스 안에서는 lane들이 병렬로 계산될 수 있어서, 다른 lane의 현재 슬라이스는 참조할 수 없습니다.';
+}
+
+function buildMatrix() {
+  let html = `<div class="slices"><span></span>${[0, 1, 2, 3].map(s => `<span>slice ${s}</span>`).join('')}</div>`;
+  for (let l = 0; l < P; l++) {
+    html += `<div class="lane"><span class="name">lane ${l}</span>`;
+    for (let s = 0; s < 4; s++) {
+      html += `<div class="seg" id="seg-${l}-${s}" style="grid-template-columns:repeat(${Math.min(SEG, 8)},1fr)">`;
+      for (let c = s * SEG; c < (s + 1) * SEG; c++) html += `<div class="blk" id="b-${l}-${c}"></div>`;
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+  $('matrix').innerHTML = html;
+}
+
+const prevCol = c => (c + Q - 1) % Q;                             // 2패스부터 0열의 직전 블록은 같은 lane의 마지막 열
+
+// 참조 가능 집합 W (RFC 9106 §3.4.1–3.4.2, 레퍼런스 구현 index_alpha). 오래된 것 → 최근 것 순서.
+function refSet(ps, s, l, c, rl) {
+  const W = [];
+  const done = ps === 0 ? [0, 1, 2, 3].slice(0, s) : [1, 2, 3].map(k => (s + k) % 4); // 끝난 슬라이스. 2패스부터는 s+1번부터(가장 오래된 것)
+  for (const s2 of done) for (let c2 = s2 * SEG; c2 < (s2 + 1) * SEG; c2++) W.push([rl, c2]);
+  if (rl === l) {                                                   // 같은 lane: 현재 슬라이스에서 이미 만든 블록까지, 직전 블록은 제외
+    for (let c2 = s * SEG; c2 < c; c2++) W.push([rl, c2]);
+    W.pop();
+  } else if (c % SEG === 0) W.pop();                                // 다른 lane: 슬라이스 첫 블록이면 마지막 후보 제외
+  return W;
+}
+function pickRef(ps, s, l, c) {
+  const dataDep = TYPE === 'd' || (TYPE === 'id' && !(ps === 0 && s < 2));
+  // 실제로는 64비트 값의 앞 32비트가 J₁, 뒤 32비트가 J₂. 여기선 32비트 가짜 값 두 개로 흉내
+  const seed = dataDep ? B[l][prevCol(c)] : mix(mix((ps << 24) ^ (l << 16) ^ (s << 8) ^ c) ^ 0xa5a5);
+  const J1 = seed, J2 = mix(seed ^ 0x2545f491);
+  const rl = ps === 0 && s === 0 ? l : J2 % P;                       // 참조 lane = J₂ mod p (첫 패스 첫 슬라이스는 자기 lane)
+  const W = refSet(ps, s, l, c, rl);
+  const x = Math.floor(J1 * J1 / 4294967296);                       // x = J₁² / 2³²
+  const y = Math.floor(W.length * x / 4294967296);                  // y = |W|·x / 2³²
+  const z = W.length - 1 - y;                                        // 최근 블록 쪽으로 편향
+  return { ref: W[z], W, mode: dataDep ? 'd (직전 블록 값)' : 'i (카운터)' };
+}
+
+function paint(cur) {
+  for (let l = 0; l < P; l++) for (let c = 0; c < Q; c++) {
+    const el = $(`b-${l}-${c}`); el.className = 'blk' + (B[l][c] !== null ? ' done' : '') + (writes[l][c] >= 2 ? ' p2' : '');
+    el.textContent = B[l][c] === null ? '' : h4(B[l][c]);
+    if (c === Q - 1 && finished) el.classList.add('last');
+  }
+  for (let l = 0; l < P; l++) for (let s = 0; s < 4; s++) $(`seg-${l}-${s}`).className = 'seg';
+  if (!cur) return;
+  const { l, c, s, W, ref } = cur;
+  for (const [l2, c2] of W) $(`seg-${l2}-${Math.floor(c2 / SEG)}`).classList.add('win');
+  $(`seg-${l}-${s}`).classList.add('cur');
+  $(`b-${l}-${prevCol(c)}`).classList.add('prev');
+  $(`b-${ref[0]}-${ref[1]}`).classList.add('ref');
+  $(`b-${l}-${c}`).classList.add('cur');
+}
+
+function step() {
+  if (idx >= order.length) { finish(); return false; }
+  const [ps, s, l, c] = order[idx++];
+  pass = ps; slice = s; lane = l; col = c;
+  const { ref, W, mode } = pickRef(ps, s, l, c);
+  const val = G(B[l][prevCol(c)], B[ref[0]][ref[1]]);
+  const overwrite = B[l][c] !== null;
+  B[l][c] = ps > 0 && overwrite ? (val ^ B[l][c]) >>> 0 : val;      // 2패스부터는 기존 블록과 XOR (RFC 9106 §3.2 단계 6)
+  writes[l][c]++; gcalls++;
+  paint({ l, c, s, W, ref });
+  $('s-g').textContent = gcalls; $('s-mem').textContent = B.flat().filter(v => v !== null).length;
+  $('s-pos').textContent = `${ps + 1}/${T} · slice ${s} · lane ${l}`; $('s-mode').textContent = mode;
+  $('note').innerHTML = `B[${l}][${c}] = G( <span style="color:var(--prev)">B[${l}][${prevCol(c)}]</span>, <span style="color:var(--ref)">B[${ref[0]}][${ref[1]}]</span> )` + (overwrite ? ` ⊕ 기존 B[${l}][${c}]` : '') + ` — lane ${ref[0]}의 참조 후보 ${W.length}개 중 선택`;
+  return true;
+}
+function finish() {
+  finished = true; clearInterval(timer); timer = null; $('play').textContent = '▶ 재생';
+  let x = 0; for (let l = 0; l < P; l++) x ^= B[l][Q - 1];
+  paint(null);
+  const tag = [0, 1, 2, 3].map(i => h4(mix(x ^ i)) + h4(mix(x ^ (i + 7)))).join('');
+  $('tag').innerHTML = `마지막 열 ${P}개를 XOR → H′ → <b>tag = ${tag}…</b> (32B 중 앞부분)`;
+  $('note').textContent = `끝. G를 ${gcalls}번 불렀고, 마지막 블록을 만들 때까지 ${M}개 블록 전부가 메모리에 살아 있었습니다.`;
+}
+function play() {
+  if (timer) { clearInterval(timer); timer = null; $('play').textContent = '▶ 재생'; return; }
+  if (finished) reset();
+  $('play').textContent = '⏸ 일시정지';
+  timer = setInterval(step, 560 - 50 * +$('speed').value);
+}
+$('play').onclick = play;
+$('step').onclick = () => { if (finished) reset(); step(); };
+$('reset').onclick = reset;
+for (const id of ['type', 'p', 'm', 't']) $(id).onchange = reset;
+$('speed').oninput = () => { if (timer) { clearInterval(timer); timer = setInterval(step, 560 - 50 * +$('speed').value); } };
+reset();
+</script>
+
+</body></html>
